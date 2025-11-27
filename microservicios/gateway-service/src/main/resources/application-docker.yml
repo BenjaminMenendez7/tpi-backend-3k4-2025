@@ -1,0 +1,40 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    gateway:
+      routes:
+
+        # CLIENTES
+        - id: clientes-service
+          uri: http://clientes-service:8081
+          predicates:
+            - Path=/api/direcciones/**
+
+        # CAMIONES
+        - id: camiones-service
+          uri: http://camiones-service:8082
+          predicates:
+            - Path=/api/camiones/**
+
+        # TARIFAS (camiones)
+        - id: tarifas-service
+          uri: http://camiones-service:8082
+          predicates:
+            - Path=/api/tarifas/**
+
+        # CONTENEDORES (SOLICITUDES)
+        - id: contenedores-service
+          uri: http://contenedores-service:8083
+          predicates:
+            - Path=/api/solicitudes/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

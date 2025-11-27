@@ -1,0 +1,149 @@
+services:
+
+  # ------------------------------------------------------------
+  # POSTGRES 18 - BD única para todos los microservicios
+  # ------------------------------------------------------------
+  postgres:
+    image: postgres:18
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: lc_user
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: logistica_contenedores_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./scripts/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./scripts/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    networks:
+      - logistica-network   # Red personalizada
+
+  # ------------------------------------------------------------
+  # KEYCLOAK 25
+  # ------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.0
+    container_name: keycloak
+    command: start-dev
+    depends_on:
+      - postgres
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/logistica_contenedores_db
+      KC_DB_USERNAME: lc_user
+      KC_DB_PASSWORD: 1234
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    networks:
+      - logistica-network   # Red personalizada
+
+  # ------------------------------------------------------------
+  # OSRM (MAPA + RUTEO)
+  # ------------------------------------------------------------
+  osrm:
+    image: osrm/osrm-backend:latest
+    container_name: osrm
+    command: osrm-routed --algorithm ch /data/uruguay-251116.osrm
+    volumes:
+      - ./external-api/osrm/osrm-data:/data
+    ports:
+      - "5000:5000"
+    networks:
+      - logistica-network   # Red personalizada
+
+  # ------------------------------------------------------------
+  # API GATEWAY (Spring Cloud Gateway)
+  # ------------------------------------------------------------
+  gateway:
+    build: microservicios/gateway-service
+    container_name: api-gateway
+    depends_on:
+      - clientes-service
+      - camiones-service
+      - contenedores-service
+      - keycloak
+    ports:
+      - "9000:9000"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - logistica-network   # Red personalizada
+
+  # ------------------------------------------------------------
+  # CLIENTES SERVICE (8081)
+  # ------------------------------------------------------------
+  clientes-service:
+    build: ./microservicios/clientes-service
+    container_name: clientes-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/logistica_contenedores_db
+      SPRING_DATASOURCE_USERNAME: lc_user
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      - postgres
+    ports:
+      - "8081:8081"
+    networks:
+      - logistica-network   # Red personalizada
+
+  # ------------------------------------------------------------
+  # CAMIONES SERVICE (8082)
+  # ------------------------------------------------------------
+  camiones-service:
+    build: ./microservicios/camiones-service
+    container_name: camiones-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/logistica_contenedores_db
+      SPRING_DATASOURCE_USERNAME: lc_user
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      - postgres
+    ports:
+      - "8082:8082"
+    networks:
+      - logistica-network   # Red personalizada
+
+  # ------------------------------------------------------------
+  # CONTENEDORES SERVICE (8083)
+  # ------------------------------------------------------------
+  contenedores-service:
+    build: ./microservicios/contenedores-service
+    container_name: contenedores-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/logistica_contenedores_db
+      SPRING_DATASOURCE_USERNAME: lc_user
+      SPRING_DATASOURCE_PASSWORD: 1234
+      OSRM_URL: http://osrm:5000
+      CLIENTES_URL: http://clientes-service:8081
+      CAMIONES_URL: http://camiones-service:8082
+    depends_on:
+      - postgres
+      - clientes-service
+      - camiones-service
+      - osrm
+    ports:
+      - "8083:8083"
+    networks:
+      - logistica-network   # Red personalizada
+
+
+# ------------------------------------------------------------
+# VOLUMES
+# ------------------------------------------------------------
+volumes:
+  postgres-data:
+  keycloak-data:
+
+# ------------------------------------------------------------
+# NETWORKS (red personalizada)
+# ------------------------------------------------------------
+networks:
+  logistica-network:
+    driver: bridge   # Usamos la red 'bridge' de Docker para facilitar la comunicación entre contenedores
+
