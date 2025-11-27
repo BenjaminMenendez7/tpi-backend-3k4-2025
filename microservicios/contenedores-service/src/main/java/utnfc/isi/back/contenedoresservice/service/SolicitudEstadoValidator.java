@@ -1,6 +1,7 @@
 package utnfc.isi.back.contenedoresservice.service;
 
 import org.springframework.stereotype.Component;
+import utnfc.isi.back.contenedoresservice.service.enums.EstadoSolicitudEnum;
 
 import java.util.Map;
 import java.util.Set;
@@ -8,23 +9,18 @@ import java.util.Set;
 @Component
 public class SolicitudEstadoValidator {
 
-    private static final Map<Long, Set<Long>> TRANSICIONES_VALIDAS = Map.of(
-            1L, Set.of(2L), // borrador -> programada
-            2L, Set.of(3L), // programada -> en transito
-            3L, Set.of(4L)  // en transito -> entregada
+    private static final Map<EstadoSolicitudEnum, Set<EstadoSolicitudEnum>>
+            TRANSICIONES_VALIDAS = Map.of(
+                    EstadoSolicitudEnum.BORRADOR, Set.of(EstadoSolicitudEnum.PROGRAMADA),
+                    EstadoSolicitudEnum.PROGRAMADA, Set.of(EstadoSolicitudEnum.EN_TRANSITO),
+                    EstadoSolicitudEnum.EN_TRANSITO, Set.of(EstadoSolicitudEnum.ENTREGADA)
     );
 
-    public boolean puedeCambiar(Long estadoActual, Long nuevoEstado) {
-        return TRANSICIONES_VALIDAS.getOrDefault(estadoActual, Set.of())
-                .contains(nuevoEstado);
+    public boolean puedeCambiar(EstadoSolicitudEnum actual,  EstadoSolicitudEnum nuevo) {
+        return TRANSICIONES_VALIDAS.getOrDefault(actual, Set.of()).contains(nuevo);
     }
 
-    public Set<Long> getPermitidos(Long estadoActual) {
-        return TRANSICIONES_VALIDAS.getOrDefault(estadoActual, Set.of());
+    public Set<EstadoSolicitudEnum> getPermitidos(EstadoSolicitudEnum actual) {
+        return TRANSICIONES_VALIDAS.getOrDefault(actual, Set.of());
     }
-
-    public Set<Long> getPermitidosIds(Long estadoActual) {
-        return TRANSICIONES_VALIDAS.getOrDefault(estadoActual, Set.of());
-    }
-
 }

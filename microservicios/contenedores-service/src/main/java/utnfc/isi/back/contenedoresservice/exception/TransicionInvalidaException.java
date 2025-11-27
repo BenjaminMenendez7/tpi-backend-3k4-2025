@@ -2,7 +2,6 @@ package utnfc.isi.back.contenedoresservice.exception;
 
 import java.util.List;
 
-
 public class TransicionInvalidaException extends RuntimeException {
 
     private final String estadoActualNombre;
@@ -12,7 +11,8 @@ public class TransicionInvalidaException extends RuntimeException {
     public TransicionInvalidaException(String estadoActualNombre,
                                        String nuevoEstadoNombre,
                                        List<String> permitidos) {
-        super("Transición inválida");
+        super(String.format("Transición inválida: %s → %s. Permitidos: %s",
+                estadoActualNombre, nuevoEstadoNombre, permitidos));
         this.estadoActualNombre = estadoActualNombre;
         this.nuevoEstadoNombre = nuevoEstadoNombre;
         this.permitidos = permitidos;
@@ -22,3 +22,4 @@ public class TransicionInvalidaException extends RuntimeException {
     public String getNuevoEstadoNombre() { return nuevoEstadoNombre; }
     public List<String> getPermitidos() { return permitidos; }
 }
+

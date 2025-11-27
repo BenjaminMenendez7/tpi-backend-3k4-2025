@@ -48,6 +48,7 @@ CREATE TABLE solicitud (
 
 @Entity
 @Table(name = "solicitud")
+@Data
 @EqualsAndHashCode(of = {"id"})
 @NoArgsConstructor
 @Getter @Setter

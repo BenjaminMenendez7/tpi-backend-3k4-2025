@@ -1,22 +1,25 @@
 package utnfc.isi.back.contenedoresservice.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.client.RestTemplate;
+import reactor.core.publisher.Mono;
 import utnfc.isi.back.contenedoresservice.client.CamionClient;
 import utnfc.isi.back.contenedoresservice.client.GeolocalizacionClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import utnfc.isi.back.contenedoresservice.dto.CamionDTO;
-import utnfc.isi.back.contenedoresservice.dto.HistorialEstadoDTO;
-import utnfc.isi.back.contenedoresservice.dto.SolicitudDetalleDTO;
-import utnfc.isi.back.contenedoresservice.dto.TramoDTO;
+import utnfc.isi.back.contenedoresservice.dto.*;
 import utnfc.isi.back.contenedoresservice.entity.*;
+import utnfc.isi.back.contenedoresservice.exception.GlobalExceptionHandler;
+import utnfc.isi.back.contenedoresservice.exception.ReglaNegocioException;
+import utnfc.isi.back.contenedoresservice.exception.ResourceNotFoundException;
 import utnfc.isi.back.contenedoresservice.exception.TransicionInvalidaException;
 import utnfc.isi.back.contenedoresservice.mapper.*;
 import utnfc.isi.back.contenedoresservice.repository.*;
+import utnfc.isi.back.contenedoresservice.service.enums.EstadoSolicitudEnum;
 import utnfc.isi.back.contenedoresservice.service.external.CamionExternalService;
 import utnfc.isi.back.contenedoresservice.service.external.GeolocalizacionExternalService;
 import utnfc.isi.back.contenedoresservice.service.external.TarifaExternalService;
@@ -25,6 +28,7 @@ import utnfc.isi.back.contenedoresservice.dto.external.TarifaDTO;  // ✔ el cor
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -71,6 +75,7 @@ public class SolicitudService {
         return solicitudRepository.findById(id).orElse(null);
     }
 
+    @Transactional
     public Solicitud save(Solicitud solicitud) {
         return solicitudRepository.save(solicitud);
     }
@@ -82,16 +87,17 @@ public class SolicitudService {
     // ===============================
     // Construir detalle de solicitud
     // ===============================
+    @Transactional(readOnly = true)
     public SolicitudDetalleDTO buildDetalle(Long idSolicitud) {
 
         Solicitud solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada"));
 
         SolicitudDetalleDTO detalle = new SolicitudDetalleDTO();
         detalle.setId(solicitud.getId());
         detalle.setFechaSolicitud(solicitud.getFechaCreacion());
         detalle.setEstado(solicitud.getEstadoSolicitud().getNombre());
-        detalle.setContenedor(contenedorMapper.toDTO(solicitud.getContenedor()));
+        detalle.setContenedor(solicitud.getContenedor() != null ? contenedorMapper.toDTO(solicitud.getContenedor()) : null);
 
         // ================================
         // RUTAS
@@ -158,14 +164,13 @@ public class SolicitudService {
         return solicitudRepository.findAll().stream()
                 .map(s -> buildDetalle(s.getId()))
                 .toList();
-
     }
 
 
     // ===============================
     // Regla 1: Selección de camión
     // ===============================
-    private CamionDTO seleccionarCamionParaSolicitud(Solicitud solicitud) {
+    private CamionDTO seleccionarCamionParaSolicitud(Solicitud solicitud) throws ResourceNotFoundException {
 
         // Obtener lista de camiones desde el microservicio camiones
         List<CamionDTO> disponibles = camionExternalService.obtenerDisponibles();
@@ -179,25 +184,26 @@ public class SolicitudService {
                 .filter(c -> c.getCapacidadPeso().compareTo(solicitud.getContenedor().getPeso()) >= 0)
                 .filter(c -> c.getCapacidadVolumen().compareTo(solicitud.getContenedor().getVolumen()) >= 0)
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("No hay camiones que soporten este contenedor."));
+                .orElseThrow(() -> new ResourceNotFoundException("No hay camiones que soporten este contenedor."));
     }
 
     // ===============================
     // Metodo principal: calcular detalles y costos
     // ===============================
-    public SolicitudDetalleDTO calcular(Long idSolicitud) {
+    @Transactional
+    public SolicitudDetalleDTO calcular(Long idSolicitud) throws ResourceNotFoundException {
         // Armar DTO base
         SolicitudDetalleDTO detalle = buildDetalle(idSolicitud);
 
         Solicitud solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada"));
 
         // REGLA 1 -> Obtener camiones compatibles (elegibles)
         List<CamionDTO> camionesElegibles = obtenerCamionesElegibles(solicitud);
 
         if (camionesElegibles.isEmpty()) {
             log.error("No hay camiones disponibles para la solicitud con ID {}", idSolicitud);
-            throw new RuntimeException("No hay camiones que soporten este contenedor.");
+            throw new ResourceNotFoundException("No hay camiones que soporten este contenedor.");
         }
 
         // REGLA 2 -> Obtener tarifa PROMEDIO entre los camiones elegibles
@@ -235,7 +241,7 @@ public class SolicitudService {
 
             // 4️⃣ Obtener la entidad real del tramo desde la BD
             var tramoEntity = tramoRepository.findById(tramo.getId())
-                    .orElseThrow(() -> new RuntimeException("Tramo no encontrado"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Tramo no encontrado"));
 
             // 5️⃣ Guardar también en la entidad porque la consigna exige registrar
             tramoEntity.setDistanciaKm(distanciaKm);
@@ -332,7 +338,7 @@ public class SolicitudService {
         List<CamionDTO> disponibles = camionExternalService.obtenerDisponibles();
 
         if (disponibles == null || disponibles.isEmpty()) {
-            throw new RuntimeException("No hay camiones disponibles.");
+            throw new ResourceNotFoundException("No hay camiones disponibles.");
         }
 
         return disponibles.stream()
@@ -344,29 +350,29 @@ public class SolicitudService {
     public SolicitudDetalleDTO asignarCamion(Long idSolicitud, Long idCamion) {
         // 1. Buscar solicitud
         Solicitud solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada"));
 
         // 2. Obtener camión desde ms-camiones
-        CamionDTO camion = camionClient.obtenerCamion(idCamion);
+        Mono<CamionDTO> camion = camionClient.obtenerCamion(idCamion);
 
         if (camion == null) {
             log.error("Camión con ID {} no encontrado", idCamion);
-            throw new RuntimeException("Camión no encontrado");
+            throw new ResourceNotFoundException("Camión no encontrado");
         }
 
-        if (!camion.isDisponible()) {
+        if (!Objects.requireNonNull(camion.block()).isDisponible()) {
             log.warn("El camión con ID {} no está disponible para la asignación", idCamion);
-            throw new RuntimeException("El camión no está disponible");
+            throw new ResourceNotFoundException("El camión no está disponible", idCamion);
         }
 
         // 3. Validar capacidad del camión
         Contenedor cont = solicitud.getContenedor();
 
-        if (cont.getPeso().compareTo(camion.getCapacidadPeso()) > 0 ||
-                cont.getVolumen().compareTo(camion.getCapacidadVolumen()) > 0) {
+        if (cont.getPeso().compareTo(Objects.requireNonNull(camion.block()).getCapacidadPeso()) > 0 ||
+                cont.getVolumen().compareTo(Objects.requireNonNull(camion.block()).getCapacidadVolumen()) > 0) {
             log.warn("El camión con ID {} no puede transportar el contenedor con peso {} y volumen {}",
                     idCamion, cont.getPeso(), cont.getVolumen());
-            throw new RuntimeException("El camión no puede transportar este contenedor");
+            throw new ReglaNegocioException("El camión no puede transportar este contenedor");
         }
 
         // 4. Asignar camión en solicitud
@@ -395,48 +401,48 @@ public class SolicitudService {
         return buildDetalle(idSolicitud);
     }
 
-
-
+    @Transactional(readOnly = true)
     public List<HistorialEstadoDTO> obtenerHistorial(Long idSolicitud) {
+        if (!solicitudRepository.existsById(idSolicitud)) {
+            throw new ResourceNotFoundException("Solicitud no encontrada",  idSolicitud);
+        }
 
-        var historial = historialRepository.findByIdSolicitudOrderByFechaRegistroAsc(idSolicitud);
-
-        return historial.stream()
+        return historialRepository.findByIdSolicitudOrderByFechaRegistroAsc(idSolicitud)
+                .stream()
                 .map(historialMapper::toDTO)
                 .toList();
     }
 
+    @Transactional
     public SolicitudDetalleDTO cambiarEstado(Long idSolicitud, Long nuevoEstadoId) {
 
         Solicitud solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada", idSolicitud));
 
-        Long estadoActualId = solicitud.getEstadoSolicitud().getId();
+        EstadoSolicitud estadoActual = solicitud.getEstadoSolicitud();
+
+        EstadoSolicitudEnum actualEnum = EstadoSolicitudEnum.fromId(estadoActual.getId());
+        EstadoSolicitudEnum nuevoEnum = EstadoSolicitudEnum.fromId(nuevoEstadoId);
 
         // 1. Validar transición
-        if (!estadoValidator.puedeCambiar(estadoActualId, nuevoEstadoId)) {
+        if (!estadoValidator.puedeCambiar(actualEnum, nuevoEnum)) {
+            Set<EstadoSolicitudEnum> permitidosEnum = estadoValidator.getPermitidos(actualEnum);
 
             // Obtener nombres de estados permitidos
-            Set<Long> idsPermitidos = estadoValidator.getPermitidosIds(estadoActualId);
-
-            List<String> nombresPermitidos = idsPermitidos.stream()
-                    .map(id -> estadoSolicitudRepository.findById(id)
-                            .map(EstadoSolicitud::getNombre)
-                            .orElse("desconocido"))
+            List<String> nombresPermitidos = permitidosEnum.stream()
+                    .map(EstadoSolicitudEnum::name)
                     .toList();
 
             throw new TransicionInvalidaException(
-                    solicitud.getEstadoSolicitud().getNombre(),  // estado actual (nombre)
-                    estadoSolicitudRepository.findById(nuevoEstadoId)
-                            .map(EstadoSolicitud::getNombre)
-                            .orElse("desconocido"),             // estado nuevo (nombre)
-                    nombresPermitidos                          // lista final con nombres
+                    actualEnum.name(),
+                    nuevoEnum.name(),
+                    nombresPermitidos
             );
         }
 
         // 2. Obtener entidad estado
         EstadoSolicitud nuevoEstado = estadoSolicitudRepository.findById(nuevoEstadoId)
-                .orElseThrow(() -> new RuntimeException("Estado destino no existe"));
+                .orElseThrow(() -> new ResourceNotFoundException("Estado destino no existe", nuevoEstadoId));
 
         // 3. Actualizar estado en solicitud
         solicitud.setEstadoSolicitud(nuevoEstado);
@@ -446,7 +452,7 @@ public class SolicitudService {
         solicitudEstadoHistorialService.registrar(idSolicitud, nuevoEstadoId);
 
         // 5. Si la solicitud llega a "entregada", liberar camión
-        if (nuevoEstadoId == 4L && solicitud.getIdCamion() != null) {
+        if (nuevoEnum == EstadoSolicitudEnum.ENTREGADA && solicitud.getIdCamion() != null) {
             camionClient.marcarDisponible(solicitud.getIdCamion());
         }
 

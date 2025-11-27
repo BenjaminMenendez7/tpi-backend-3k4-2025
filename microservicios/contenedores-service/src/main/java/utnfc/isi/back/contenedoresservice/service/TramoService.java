@@ -8,6 +8,7 @@ import utnfc.isi.back.contenedoresservice.dto.TramoDTO;
 import utnfc.isi.back.contenedoresservice.entity.EstadoTramo;
 import utnfc.isi.back.contenedoresservice.entity.Tramo;
 import utnfc.isi.back.contenedoresservice.exception.ReglaNegocioException;
+import utnfc.isi.back.contenedoresservice.exception.ResourceNotFoundException;
 import utnfc.isi.back.contenedoresservice.mapper.TramoMapper;
 import utnfc.isi.back.contenedoresservice.repository.EstadoTramoRepository;
 import utnfc.isi.back.contenedoresservice.repository.TramoRepository;
@@ -32,7 +33,7 @@ public class TramoService {
     public TramoDTO iniciarTramo(Long idTramo) {
         // Buscar el tramo en la base de datos
         Tramo tramo = tramoRepository.findById(idTramo)
-                .orElseThrow(() -> new ReglaNegocioException.ResourceNotFoundException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Tramo con ID " + idTramo + " no encontrado"));
 
         // Verificar si el tramo ya tiene una fecha de inicio
@@ -54,7 +55,7 @@ public class TramoService {
 
         // Asignar el estado 'Iniciado' y la fecha de inicio
         EstadoTramo estadoIniciado = estadoTramoRepository.findById(2L)
-                .orElseThrow(() -> new ReglaNegocioException.ResourceNotFoundException("Estado 'Iniciado' no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Estado 'Iniciado' no encontrado"));
 
         tramo.setEstadoTramo(estadoIniciado);
         tramo.setFechaHoraInicio(LocalDateTime.now());

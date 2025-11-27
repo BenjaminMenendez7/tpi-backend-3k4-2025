@@ -1,13 +1,19 @@
 package utnfc.isi.back.contenedoresservice.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
+@Getter
+@Setter
 public class SolicitudDetalleDTO {
-
+    @NotNull(message = "El idDetalle es obligatorio")
     private Long id;
     private LocalDateTime fechaSolicitud;
 

@@ -1,32 +1,39 @@
 package utnfc.isi.back.contenedoresservice.client;
 
-import lombok.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import utnfc.isi.back.contenedoresservice.dto.CamionDTO;
 
 @Service
 @RequiredArgsConstructor
 public class CamionClient {
 
-    private final RestTemplate restTemplate;
+    private final WebClient webClient;
 
-    private final String BASE_URL = "http://camiones-service:8082/api/camiones";
+    @Value("${camiones.service.url}")
+    private String baseUrl;
 
-    public CamionDTO obtenerCamion(Long idCamion) {
-        return restTemplate.getForObject(
-                BASE_URL + "/" + idCamion,
-                CamionDTO.class
-        );
+    public Mono<CamionDTO> obtenerCamion(Long idCamion) {
+        return webClient.get()
+                .uri(baseUrl + "/" + idCamion)
+                .retrieve()
+                .bodyToMono(CamionDTO.class);
     }
 
-    public void marcarNoDisponible(Long idCamion) {
-        restTemplate.put(BASE_URL + "/" + idCamion + "/ocupar", null);
+    public Mono<Void> marcarNoDisponible(Long idCamion) {
+        return webClient.put()
+                .uri(baseUrl + "/" + idCamion + "/ocupar")
+                .retrieve()
+                .bodyToMono(Void.class);
     }
 
-    public void marcarDisponible(Long idCamion) {
-        restTemplate.put(BASE_URL + "/" + idCamion + "/liberar", null);
+    public Mono<Void> marcarDisponible(Long idCamion) {
+        return webClient.put()
+                .uri(baseUrl + "/" + idCamion + "/liberar")
+                .retrieve()
+                .bodyToMono(Void.class);
     }
-
 }
-
