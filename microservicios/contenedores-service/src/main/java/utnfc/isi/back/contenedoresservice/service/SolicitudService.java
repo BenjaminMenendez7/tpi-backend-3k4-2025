@@ -159,10 +159,20 @@ public class SolicitudService {
         return detalle;
     }
 
-
+    @Transactional(readOnly = true)
     public List<SolicitudDetalleDTO> findAllDetalle() {
         return solicitudRepository.findAll().stream()
-                .map(s -> buildDetalle(s.getId()))
+                .map(s -> {
+                    SolicitudDetalleDTO dto = new SolicitudDetalleDTO();
+                    dto.setId(s.getId());
+                    dto.setFechaSolicitud(s.getFechaCreacion());
+                    dto.setEstado(s.getEstadoSolicitud().getNombre());
+                    dto.setContenedor(s.getContenedor() != null ? contenedorMapper.toDTO(s.getContenedor()) : null);
+                    dto.setCostoFinal(s.getCostoFinal());
+                    dto.setCostoTotal(s.getCostoEstimado());
+                    dto.setTiempoReal(s.getTiempoReal());
+                    return dto;
+                })
                 .toList();
     }
 
