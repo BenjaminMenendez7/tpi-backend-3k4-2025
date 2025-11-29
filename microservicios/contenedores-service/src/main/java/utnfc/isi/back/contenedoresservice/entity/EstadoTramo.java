@@ -13,6 +13,7 @@ CREATE TABLE estado_tramo (
 
 @Entity
 @Table(name = "estado_tramo")
+@Data
 @EqualsAndHashCode(of = {"id"})
 @NoArgsConstructor
 @Getter @Setter
