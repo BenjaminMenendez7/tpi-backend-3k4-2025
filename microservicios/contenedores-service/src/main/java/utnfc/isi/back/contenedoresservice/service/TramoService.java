@@ -61,8 +61,13 @@ public class TramoService {
 
         validarFin(tramo);
 
+        EstadoTramo estadoFinalizado = estadoTramoRepository.findByNombre(EstadoTramoEnum.FINALIZADO.name())
+                .orElseThrow(() -> new  ResourceNotFoundException("Estado 'Finalizado' no encontrado"));
+
         // Setear la fecha de fin
+        tramo.setEstadoTramo(estadoFinalizado);
         tramo.setFechaHoraFin(LocalDateTime.now());
+
         tramoRepository.save(tramo);
 
         // Log de operación principal
