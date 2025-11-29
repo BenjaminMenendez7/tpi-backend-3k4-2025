@@ -27,9 +27,9 @@ import utnfc.isi.back.contenedoresservice.dto.external.TarifaDTO;  // ✔ el cor
 
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.util.*;
 
 
 @Service
@@ -37,6 +37,7 @@ import java.util.Set;
 @Getter @Setter
 public class SolicitudService {
 
+    private final SolicitudMapper solicitudMapper;
     private Long estadiaRealMinutos;
     private final CamionClient camionClient;
     private final EstadoSolicitudRepository estadoSolicitudRepository;
@@ -75,11 +76,33 @@ public class SolicitudService {
         return solicitudRepository.findById(id).orElse(null);
     }
 
-    @Transactional
-    public Solicitud save(Solicitud solicitud) {
+    private Solicitud save(Solicitud solicitud) {
         return solicitudRepository.save(solicitud);
     }
 
+    @Transactional
+    public SolicitudDetalleDTO save(SolicitudDTO solicitudDto) {
+        var solicitud = solicitudMapper.toEntity(solicitudDto);
+
+        EstadoSolicitud estadoBorrador = estadoSolicitudRepository.findByNombre(EstadoSolicitudEnum.BORRADOR.name())
+                        .orElseThrow(() -> new ResourceNotFoundException("Estado BORRADOR no encontrado", solicitud.getId()));
+
+        solicitud.setEstadoSolicitud(estadoBorrador);
+
+        solicitudRepository.save(solicitud);
+
+        SolicitudDetalleDTO dto = new SolicitudDetalleDTO();
+        dto.setId(solicitud.getId());
+        dto.setFechaSolicitud(solicitud.getFechaCreacion());
+        dto.setEstado(solicitud.getEstadoSolicitud().getNombre());
+        dto.setContenedor(solicitud.getContenedor() != null ? contenedorMapper.toDTO(solicitud.getContenedor()) : null);
+        dto.setCostoFinal(solicitud.getCostoFinal());
+        dto.setCostoTotal(solicitud.getCostoEstimado());
+        dto.setTiempoReal(solicitud.getTiempoReal());
+        return dto;
+    }
+
+    @Transactional
     public void delete(Long id) {
         solicitudRepository.deleteById(id);
     }
@@ -217,10 +240,7 @@ public class SolicitudService {
         }
 
         // REGLA 2 -> Obtener tarifa PROMEDIO entre los camiones elegibles
-        BigDecimal peso = solicitud.getContenedor().getPeso();
-        BigDecimal volumen = solicitud.getContenedor().getVolumen();
-
-        TarifaDTO tarifa = tarifaExternalService.obtenerTarifaPorRango(peso, volumen);
+        TarifaDTO tarifa = obtenerTarifaPromedio(solicitud);
 
         // Guardamos desglose en el DTO
         detalle.setCostoKilometros(tarifa.getCostoKm());
@@ -231,64 +251,18 @@ public class SolicitudService {
                 idSolicitud, tarifa.getCostoKm(), tarifa.getCostoCombustible(), tarifa.getCostoEstadiaDeposito());
 
         // Calcular distancia y tiempo por tramos usando OSRM
-        Long tiempoTotalMin = 0L;
-        BigDecimal distanciaTotalKm = BigDecimal.ZERO;
-
-        for (var tramo : detalle.getTramos()) {
-            // 1️⃣ Obtener distancia real desde OSRM o fallback
-            BigDecimal distanciaKm = calcularDistanciaReal(tramo.getOrigen(), tramo.getDestino());
-
-            // 2️⃣ Calcular tiempo estimado
-            BigDecimal velocidadPromedioKmH = BigDecimal.valueOf(60);
-            long minutos = distanciaKm
-                    .divide(velocidadPromedioKmH, 2, java.math.RoundingMode.HALF_UP)
-                    .multiply(BigDecimal.valueOf(60))
-                    .longValue();
-
-            // 3️⃣ Actualizar el DTO
-            tramo.setDistanciaKm(distanciaKm);
-            tramo.setTiempoEstimadoMinutos(minutos);
-
-            // 4️⃣ Obtener la entidad real del tramo desde la BD
-            var tramoEntity = tramoRepository.findById(tramo.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Tramo no encontrado"));
-
-            // 5️⃣ Guardar también en la entidad porque la consigna exige registrar
-            tramoEntity.setDistanciaKm(distanciaKm);
-            tramoEntity.setTiempoEstimadoMinutos(minutos);
-            tramoRepository.save(tramoEntity);
-
-            // 6️⃣ Acumular totales
-            distanciaTotalKm = distanciaTotalKm.add(distanciaKm);
-            tiempoTotalMin += minutos;
-        }
-
-        detalle.getRuta().setDistanciaTotalKm(distanciaTotalKm);
-        detalle.getRuta().setTiempoTotalMinutos(tiempoTotalMin);
-        detalle.setTiempoEstimadoMinutos(tiempoTotalMin);
-
-        log.info("Cálculo de costos y tiempos para solicitud con ID {} completado. Distancia Total: {} km, Tiempo Total: {} minutos.",
-                idSolicitud, distanciaTotalKm, tiempoTotalMin);
+        calcularDistanciasYTiempo(detalle);
 
         // ===============================
         // CÁLCULO DE ESTADÍAS REALES
         // ===============================
-        long minutosEstadiaReal = detalle.getTramos().stream()
-                .filter(t -> t.getIdTipoTramo() == 1 || t.getIdTipoTramo() == 2 || t.getIdTipoTramo() == 3)
-                .filter(t -> t.getFechaHoraInicio() != null && t.getFechaHoraFin() != null)
-                .mapToLong(t -> java.time.Duration.between(t.getFechaHoraInicio(), t.getFechaHoraFin()).toMinutes())
-                .sum();
-
+        long minutosEstadiaReal = calcularEstadiaReal(detalle);
         detalle.setEstadiaRealMinutos(minutosEstadiaReal);
 
         log.info("Cálculo de estadías reales para solicitud con ID {}: {} minutos", idSolicitud, minutosEstadiaReal);
 
-        // Lo mostramos SOLO en el detalle (no se guarda en BD)
-        detalle.setEstadiaRealMinutos(minutosEstadiaReal);
-
         // Costo real de estadía basado en lo real
-        BigDecimal costoEstadiaReal = tarifa.getCostoEstadiaDeposito()
-                .multiply(BigDecimal.valueOf(minutosEstadiaReal / 60.0));
+        BigDecimal costoEstadiaReal = calcularCostoEstadiaReal(tarifa, minutosEstadiaReal);
 
         log.info("Costo real de estadía para solicitud con ID {}: {}", idSolicitud, costoEstadiaReal);
 
@@ -296,16 +270,9 @@ public class SolicitudService {
         solicitudRepository.save(solicitud);
 
         // REGLA 3 - Cálculo del costo total estimado según consigna
-        long cantidadTramos = detalle.getTramos().size();
-        BigDecimal valorGestionPorTramo = BigDecimal.valueOf(1000); // 1000 por tramo
-        BigDecimal cargosGestion = valorGestionPorTramo.multiply(BigDecimal.valueOf(cantidadTramos));
-
-        BigDecimal costoEstimado = tarifa.getCostoKm().multiply(distanciaTotalKm)
-                .add(tarifa.getCostoCombustible().multiply(distanciaTotalKm))
-                .add(costoEstadiaReal)
-                .add(cargosGestion);
-
+        BigDecimal costoEstimado = calcularCostoTotal(detalle, tarifa, costoEstadiaReal);
         detalle.setCostoTotal(costoEstimado);
+
         solicitud.setCostoEstimado(costoEstimado);
         solicitudRepository.save(solicitud);
 
@@ -314,6 +281,76 @@ public class SolicitudService {
         return detalle;
     }
 
+    private TarifaDTO obtenerTarifaPromedio(Solicitud solicitud) {
+        BigDecimal peso = solicitud.getContenedor().getPeso();
+        BigDecimal volumen = solicitud.getContenedor().getVolumen();
+        TarifaDTO tarifa = tarifaExternalService.obtenerTarifaPorRango(peso, volumen);
+        log.info("Tarifa obtenida: Km {}, Combustible {}, Estadía {}", tarifa.getCostoKm(), tarifa.getCostoCombustible(), tarifa.getCostoEstadiaDeposito());
+        return tarifa;
+    }
+
+    private void calcularDistanciasYTiempo(SolicitudDetalleDTO detalle) {
+        BigDecimal distanciaTotalKm = BigDecimal.ZERO;
+        long tiempoTotalMin = 0L;
+
+        List<Tramo> tramosActualizados = new ArrayList<>();
+
+        for (var tramo : detalle.getTramos()) {
+            BigDecimal distanciaKm = calcularDistanciaReal(tramo.getOrigen(), tramo.getDestino());
+            BigDecimal velocidadPromedioKmH = BigDecimal.valueOf(60);
+            long minutos = distanciaKm.divide(velocidadPromedioKmH, 2, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(60)).longValue();
+
+            tramo.setDistanciaKm(distanciaKm);
+            tramo.setTiempoEstimadoMinutos(minutos);
+
+            var tramoEntity = tramoRepository.findById(tramo.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Tramo no encontrado"));
+            tramoEntity.setDistanciaKm(distanciaKm);
+            tramoEntity.setTiempoEstimadoMinutos(minutos);
+            tramosActualizados.add(tramoEntity);
+
+            distanciaTotalKm = distanciaTotalKm.add(distanciaKm);
+            tiempoTotalMin += minutos;
+        }
+
+        tramoRepository.saveAll(tramosActualizados);
+
+        detalle.getRuta().setDistanciaTotalKm(distanciaTotalKm);
+        detalle.getRuta().setTiempoTotalMinutos(tiempoTotalMin);
+        detalle.setTiempoEstimadoMinutos(tiempoTotalMin);
+
+        log.info("Cálculo de costos y tiempos para solicitud con ID {} completado. Distancia Total: {} km, Tiempo Total: {} minutos.",
+                detalle.getId(), distanciaTotalKm, tiempoTotalMin);
+    }
+
+    private long calcularEstadiaReal(SolicitudDetalleDTO detalle) {
+        return detalle.getTramos().stream()
+                .filter(t -> Arrays.asList(1, 2, 3).contains(t.getIdTipoTramo()))
+                .filter(t -> t.getFechaHoraInicio() != null && t.getFechaHoraFin() != null)
+                .mapToLong(t -> Duration.between(t.getFechaHoraInicio(), t.getFechaHoraFin()).toMinutes())
+                .sum();
+    }
+
+    private BigDecimal calcularCostoEstadiaReal(TarifaDTO tarifa, long minutosEstadiaReal) {
+        BigDecimal horasEstadia = BigDecimal.valueOf(minutosEstadiaReal)
+                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+        BigDecimal costo = tarifa.getCostoEstadiaDeposito().multiply(horasEstadia);
+        log.info("Costo real de estadía: {}", costo);
+        return costo;
+    }
+
+    private BigDecimal calcularCostoTotal(SolicitudDetalleDTO detalle, TarifaDTO tarifa, BigDecimal costoEstadiaReal) {
+        BigDecimal distanciaTotalKm = detalle.getRuta().getDistanciaTotalKm();
+        long cantidadTramos = detalle.getTramos().size();
+        BigDecimal valorGestionPorTramo = BigDecimal.valueOf(1000);
+        BigDecimal cargosGestion = valorGestionPorTramo.multiply(BigDecimal.valueOf(cantidadTramos));
+
+        return tarifa.getCostoKm().multiply(distanciaTotalKm)
+                .add(tarifa.getCostoCombustible().multiply(distanciaTotalKm))
+                .add(costoEstadiaReal)
+                .add(cargosGestion);
+    }
 
     private BigDecimal calcularDistanciaReal(Long idOrigen, Long idDestino) {
 

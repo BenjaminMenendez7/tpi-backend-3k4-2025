@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import utnfc.isi.back.contenedoresservice.dto.HistorialEstadoDTO;
 import utnfc.isi.back.contenedoresservice.dto.SolicitudDTO;
 import utnfc.isi.back.contenedoresservice.dto.SolicitudDetalleDTO;
@@ -39,13 +40,16 @@ public class SolicitudController {
     // Registrar solicitud (cliente)
     @PreAuthorize("hasRole('cliente')")
     @PostMapping
-    public ResponseEntity<SolicitudDTO> save(@Valid @RequestBody SolicitudDTO solicitudDto) {
-        var solicitud = solicitudMapper.toEntity(solicitudDto);
-        var createdEntity = solicitudService.save(solicitud);
-        var createdDto = solicitudMapper.toDTO(createdEntity);
-        return ResponseEntity
-                .created(URI.create(("api/solicitudes") + createdDto.getId()))
-                .body(createdDto);
+    public ResponseEntity<SolicitudDetalleDTO> save(@Valid @RequestBody SolicitudDTO solicitudDto) {
+        SolicitudDetalleDTO result = solicitudService.save(solicitudDto);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(result.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(result);
     }
 
     // ============ OPERADOR ============

@@ -17,9 +17,16 @@ public class SolicitudDetalleDTO {
     private Long id;
     private LocalDateTime fechaSolicitud;
 
+    @NotNull
     private ContenedorDTO contenedor;
+
+    @NotNull
     private DepositoDTO deposito;
+
+    @NotNull
     private RutaDTO ruta;
+
+    @NotNull
     private List<TramoDTO> tramos;
 
     private String estado;
