@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import utnfc.isi.back.security.KeycloakJwtGrantedAuthoritiesConverter;
 
 @Configuration
 @EnableWebSecurity
@@ -19,6 +20,13 @@ public class CamionesSecurityConfig {
 
     public CamionesSecurityConfig(JwtAuthenticationConverter jwtAuthConverter) {
         this.jwtAuthConverter = jwtAuthConverter;
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(new KeycloakJwtGrantedAuthoritiesConverter());
+        return converter;
     }
 
     @Bean
