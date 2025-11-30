@@ -6,7 +6,7 @@ import utnfc.isi.back.clientesservice.dto.GeolocalizacionDTO;
 import utnfc.isi.back.clientesservice.service.GeolocalizacionService;
 
 @RestController
-@RequestMapping("/api/geolocalizacion")
+@RequestMapping("/geolocalizacion")
 @RequiredArgsConstructor
 public class GeolocalizacionController {
 

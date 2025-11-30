@@ -5,7 +5,7 @@ import utnfc.isi.back.clientesservice.entity.Direccion;
 import utnfc.isi.back.clientesservice.service.DireccionService;
 
 @RestController
-@RequestMapping("/api/clientes")
+@RequestMapping("/clientes")
 public class DireccionController {
 
     private final DireccionService direccionService;

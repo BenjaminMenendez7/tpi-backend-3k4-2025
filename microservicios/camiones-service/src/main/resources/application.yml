@@ -6,11 +6,11 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/LogisticaContenedores
-          jwk-set-uri: http://localhost:8080/realms/LogisticaContenedores/protocol/openid-connect/certs
+          issuer-uri: http://keycloak:8080/realms/LogisticaContenedores
+          jwk-set-uri: http://keycloak:8080/realms/LogisticaContenedores/protocol/openid-connect/certs
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/logistica_contenedores_db
+    url: jdbc:postgresql://host.docker.internal:5432/logistica_contenedores_db
     username: lc_user
     password: "1234"
     driver-class-name: org.postgresql.Driver

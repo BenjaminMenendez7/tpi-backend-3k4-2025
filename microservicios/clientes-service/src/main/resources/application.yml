@@ -27,4 +27,8 @@ server:
   port: 8081
 
 
+logging:
+  level:
+    com.zaxxer.hikari: DEBUG
+    org.springframework.jdbc: DEBUG
 

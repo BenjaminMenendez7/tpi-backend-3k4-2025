@@ -36,6 +36,9 @@ public class GatewayConfig {
                                 .preserveHostHeader()
                         )
                         .uri("http://clientes-service:8081"))
+                .route("clientes-docs", r -> r.path("/api/clientes/v3/api-docs")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri("http://clientes-service:8081/v3/api-docs"))
 
                 // CAMIONES SERVICE
                 .route("camiones-service", r -> r.path("/api/camiones/**", "/api/tarifas/**")
@@ -45,6 +48,9 @@ public class GatewayConfig {
                                 .preserveHostHeader()
                         )
                         .uri("http://camiones-service:8082"))
+                .route("camiones-docs", r -> r.path("/api/camiones/v3/api-docs")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri("http://camiones-service:8082/v3/api-docs"))
 
                 // CONTENEDORES SERVICE
                 .route("contenedores-service", r -> r.path("/api/solicitudes/**", "/api/rutas/**", "/api/tramos/**")
@@ -54,6 +60,9 @@ public class GatewayConfig {
                                 .preserveHostHeader()
                         )
                         .uri("http://contenedores-service:8083"))
+                .route("contenedores-docs", r -> r.path("/api/contenedores/v3/api-docs")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri("http://contenedores-service:8083/v3/api-docs"))
 
                 // OSRM SERVICE
                 .route("osrm-service", r -> r.path("/api/osrm/**")
@@ -66,4 +75,6 @@ public class GatewayConfig {
 
                 .build();
     }
+
+
 }

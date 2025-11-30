@@ -1,6 +1,5 @@
-camiones:
-  service:
-    url: http://camiones-service:8082/api/camiones
+server:
+  port: 8083
 
 spring:
   application:
@@ -10,11 +9,13 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/LogisticaContenedores
-          jwk-set-uri: http://localhost:8080/realms/LogisticaContenedores/protocol/openid-connect/certs
+          # Usamos el nombre del contenedor Docker (keycloak)
+          issuer-uri: http://keycloak:8080/realms/LogisticaContenedores
+          jwk-set-uri: http://keycloak:8080/realms/LogisticaContenedores/protocol/openid-connect/certs
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/logistica_contenedores_db
+    # ⚠️ Nota: Si esto falla, cámbielo a jdbc:postgresql://postgres:5432/...
+    url: jdbc:postgresql://host.docker.internal:5432/logistica_contenedores_db
     username: lc_user
     password: "1234"
     driver-class-name: org.postgresql.Driver
@@ -27,7 +28,18 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
 
-server:
-  port: 8083
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    urls:
+      - url: /v3/api-docs
+        name: Contenedores API
+  urls.primaryName: Contenedores API
 
-
+# ✅ SOLUCIÓN AL ERROR: Definir el placeholder faltante para WebClient
+camiones:
+  service:
+    url: http://camiones-service:8082 # Usa el nombre del servicio Docker

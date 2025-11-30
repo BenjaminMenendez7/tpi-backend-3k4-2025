@@ -1,6 +1,7 @@
 package utnfc.isi.back.camionesservice.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import utnfc.isi.back.camionesservice.dto.TarifaDTO;
 import utnfc.isi.back.camionesservice.service.TarifaService;
@@ -9,12 +10,13 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tarifas")
+@RequestMapping("/tarifas")
 @RequiredArgsConstructor
 public class TarifaController {
 
     private final TarifaService tarifaService;
 
+    @PreAuthorize("hasAnyRole('OPERADOR', 'CLIENTE')")
     @GetMapping("/buscar")
     public TarifaDTO obtenerTarifa(
             @RequestParam Long idTipoCamion,
@@ -24,6 +26,7 @@ public class TarifaController {
         return tarifaService.obtenerTarifaPara(idTipoCamion, pesoContenedor, volumenContenedor);
     }
 
+    @PreAuthorize("hasAnyRole('OPERADOR', 'CLIENTE')")
     @GetMapping("/buscar-por-rango")
     public List<TarifaDTO> obtenerTarifasPorRango(
             @RequestParam BigDecimal pesoContenedor,

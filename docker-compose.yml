@@ -47,15 +47,15 @@ services:
   # OSRM (MAPA + RUTEO)
   # ------------------------------------------------------------
   osrm:
-    image: osrm/osrm-backend:latest
+    image: ghcr.io/project-osrm/osrm-backend:latest
     container_name: osrm
-    command: osrm-routed --algorithm ch /data/uruguay-251116.osrm
+    command: osrm-routed --algorithm ch /data/argentina-251114.osm
     volumes:
       - ./external-api/osrm/osrm-data:/data
     ports:
       - "5000:5000"
     networks:
-      - logistica-network   # Red personalizada
+      - logistica-network
 
   # ------------------------------------------------------------
   # API GATEWAY (Spring Cloud Gateway)

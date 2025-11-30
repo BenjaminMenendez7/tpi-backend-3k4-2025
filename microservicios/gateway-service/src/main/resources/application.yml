@@ -9,43 +9,96 @@ spring:
     oauth2:
       resourceserver:
         jwt:
+          # Keycloak accesible desde el contenedor
           issuer-uri: http://keycloak:8080/realms/LogisticaContenedores
+          jwk-set-uri: http://keycloak:8080/realms/LogisticaContenedores/protocol/openid-connect/certs
 
   cloud:
     gateway:
       routes:
 
-        # ===========================
-        # CLIENTES SERVICE (8081)
-        # ===========================
+        # -------------------------------
+        # CLIENTES SERVICE
+        # -------------------------------
         - id: clientes-service
           uri: http://clientes-service:8081
           predicates:
-            - Path=/api/clientes/**,/api/direcciones/**,/api/geolocalizacion/**
+            - Path=/api/clientes/**
+          filters:
+            - RewritePath=/api/(?<segmento>.*), /${segmento}
+        #            - SetRequestHeader=Authorization, #{'Bearer ' + (request.headers['Authorization']?.get(0) ?: 'none')}
 
-        # ===========================
-        # CAMIONES SERVICE (8082)
-        # ===========================
+        - id: direcciones-service
+          uri: http://clientes-service:8081
+          predicates:
+            - Path=/api/direcciones/**
+          filters:
+            - RewritePath=/api/(?<segmento>.*), /${segmento}
+        #            - SetRequestHeader=Authorization, #{'Bearer ' + (request.headers['Authorization']?.get(0) ?: 'none')}
+
+        - id: geolocalizacion-service
+          uri: http://clientes-service:8081
+          predicates:
+            - Path=/api/geolocalizacion/**
+          filters:
+            - RewritePath=/api/(?<segmento>.*), /${segmento}
+        #            - SetRequestHeader=Authorization, #{'Bearer ' + (request.headers['Authorization']?.get(0) ?: 'none')}
+
+        # -------------------------------
+        # CAMIONES SERVICE
+        # -------------------------------
         - id: camiones-service
           uri: http://camiones-service:8082
           predicates:
-            - Path=/api/camiones/**,/api/tarifas/**
+            - Path=/api/camiones/**
+          filters:
+            - RewritePath=/api/(?<segmento>.*), /${segmento}
+        #            - SetRequestHeader=Authorization, #{'Bearer ' + (request.headers['Authorization']?.get(0) ?: 'none')}
 
-        # ===========================
-        # CONTENEDORES SERVICE (8083)
-        # ===========================
+        - id: tarifas-service
+          uri: http://camiones-service:8082
+          predicates:
+            - Path=/api/tarifas/**
+          filters:
+            - RewritePath=/api/(?<segmento>.*), /${segmento}
+        #            - SetRequestHeader=Authorization, #{'Bearer ' + (request.headers['Authorization']?.get(0) ?: 'none')}
+
+        # -------------------------------
+        # CONTENEDORES SERVICE
+        # -------------------------------
         - id: contenedores-service
           uri: http://contenedores-service:8083
           predicates:
-            - Path=/api/solicitudes/**,/api/rutas/**,/api/tramos/**
+            - Path=/api/solicitudes/**
+          filters:
+            - RewritePath=/api/(?<segmento>.*), /${segmento}
+        #            - SetRequestHeader=Authorization, #{'Bearer ' + (request.headers['Authorization']?.get(0) ?: 'none')}
 
-        # ===========================
-        # OSRM SERVICE (5000)
-        # ===========================
+        - id: rutas-service
+          uri: http://contenedores-service:8083
+          predicates:
+            - Path=/api/rutas/**
+          filters:
+            - RewritePath=/api/(?<segmento>.*), /${segmento}
+        #            - SetRequestHeader=Authorization, #{'Bearer ' + (request.headers['Authorization']?.get(0) ?: 'none')}
+
+        - id: tramos-service
+          uri: http://contenedores-service:8083
+          predicates:
+            - Path=/api/tramos/**
+          filters:
+            - RewritePath=/api/(?<segmento>.*), /${segmento}
+        #            - SetRequestHeader=Authorization, #{'Bearer ' + (request.headers['Authorization']?.get(0) ?: 'none')}
+
+        # -------------------------------
+        # OSRM SERVICE (Sin seguridad)
+        # -------------------------------
         - id: osrm-service
           uri: http://osrm:5000
           predicates:
             - Path=/api/osrm/**
+          filters:
+            - RewritePath=/api/(?<segmento>.*), /${segmento}
 
 management:
   endpoints:
@@ -53,3 +106,17 @@ management:
       exposure:
         include: "*"
 
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: Clientes
+        url: /api/clientes/v3/api-docs
+      - name: Camiones
+        url: /api/camiones/v3/api-docs
+      - name: Contenedores
+        url: /api/contenedores/v3/api-docs

@@ -8,7 +8,7 @@ import utnfc.isi.back.clientesservice.service.ClienteService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/clientes")
+@RequestMapping("/clientes")
 public class ClienteController {
 
     private final ClienteService clienteService;

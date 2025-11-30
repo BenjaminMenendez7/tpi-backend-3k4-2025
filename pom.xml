@@ -19,6 +19,7 @@
         <module>microservicios/clientes-service</module>
         <module>microservicios/camiones-service</module>
         <module>microservicios/contenedores-service</module>
+        <module>microservicios/security-starter</module>
         <module>microservicios/gateway-service</module>
     </modules>
 
