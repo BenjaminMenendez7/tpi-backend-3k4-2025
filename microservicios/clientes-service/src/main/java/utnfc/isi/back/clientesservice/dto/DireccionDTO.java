@@ -1,10 +1,9 @@
 package utnfc.isi.back.clientesservice.dto;
 
-import lombok.*;
+import lombok.Data;
 
-@Getter @Setter
+@Data
 public class DireccionDTO {
-
     private Long id;
     private String nroCalle;
     private String piso;
@@ -12,8 +11,14 @@ public class DireccionDTO {
     private String observaciones;
     private String codigoPostal;
 
-    private Long calleId; // desde ManyToOne Calle
-    private String nombreCalle;
-    private Long clienteId;   // desde ManyToOne Cliente
+    private Long calleId;       // FK hacia la entidad Calle
+    private String nombreCalle; // nombre de la calle, solo para mostrar
 
+    private Long clienteId;
+
+    // Jerarquía de ubicación
+    private String barrio;
+    private String ciudad;
+    private String provincia;
+    private String pais;
 }

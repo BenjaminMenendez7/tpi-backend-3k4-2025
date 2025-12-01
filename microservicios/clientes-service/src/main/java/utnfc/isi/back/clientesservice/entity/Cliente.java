@@ -46,4 +46,6 @@ public class Cliente {
 
     @OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
     private List<Direccion> direcciones;
+
+
 }

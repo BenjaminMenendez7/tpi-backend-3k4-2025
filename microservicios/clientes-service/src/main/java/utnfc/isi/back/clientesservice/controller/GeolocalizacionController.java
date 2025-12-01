@@ -12,7 +12,6 @@ public class GeolocalizacionController {
 
     private final GeolocalizacionService geoService;
 
-    // http://localhost:8081/api/geolocalizacion/{idDireccion}
     @GetMapping("/{idDireccion}")
     public GeolocalizacionDTO obtener(@PathVariable Long idDireccion) {
         var geo = geoService.obtenerPorIdDireccion(idDireccion);

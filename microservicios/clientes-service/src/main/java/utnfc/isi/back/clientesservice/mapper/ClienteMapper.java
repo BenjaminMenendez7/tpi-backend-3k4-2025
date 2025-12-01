@@ -1,20 +1,18 @@
 package utnfc.isi.back.clientesservice.mapper;
 
+import org.mapstruct.Mapper;
+import utnfc.isi.back.clientesservice.dto.ClienteConDireccionesDTO;
 import utnfc.isi.back.clientesservice.dto.ClienteDTO;
 import utnfc.isi.back.clientesservice.entity.Cliente;
 
-public class ClienteMapper {
+@Mapper(componentModel = "spring", uses = {DireccionMapper.class})
+public interface ClienteMapper {
 
-    public static ClienteDTO toDTO(Cliente cliente) {
-        ClienteDTO dto = new ClienteDTO();
-        dto.setId(cliente.getId());
-        dto.setDocumento(cliente.getDocumento());
-        dto.setNombre(cliente.getNombre());
-        dto.setApellido(cliente.getApellido());
-        dto.setEmail(cliente.getEmail());
-        dto.setTelefono(cliente.getTelefono());
+    ClienteDTO toDTO(Cliente cliente);
 
-        return dto;
-    }
+    Cliente toEntity(ClienteDTO dto);
 
+    ClienteConDireccionesDTO toConDireccionesDTO(Cliente cliente);
+
+    Cliente toEntityConDirecciones(ClienteConDireccionesDTO dto);
 }

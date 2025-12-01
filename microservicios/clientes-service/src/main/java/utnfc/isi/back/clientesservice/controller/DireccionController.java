@@ -1,6 +1,8 @@
 package utnfc.isi.back.clientesservice.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import utnfc.isi.back.clientesservice.dto.DireccionDTO;
 import utnfc.isi.back.clientesservice.entity.Direccion;
 import utnfc.isi.back.clientesservice.service.DireccionService;
 
@@ -14,12 +16,13 @@ public class DireccionController {
         this.direccionService = direccionService;
     }
 
-    @PostMapping("/{idCliente}/direcciones")
-    public Direccion crearDireccion(
-            @PathVariable Long idCliente,
-            @RequestBody Direccion direccion) {
+    @PostMapping("/clientes/{clienteId}/direcciones")
+    public ResponseEntity<DireccionDTO> crearDireccion(
+            @PathVariable Long clienteId,
+            @RequestBody DireccionDTO dto) {
 
-        return direccionService.crearDireccionParaCliente(idCliente, direccion);
+        DireccionDTO guardada = direccionService.crear(dto, clienteId);
+        return ResponseEntity.ok(guardada);
     }
 
 }
