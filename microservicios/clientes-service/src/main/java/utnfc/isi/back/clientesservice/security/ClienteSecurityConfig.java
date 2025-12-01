@@ -2,11 +2,14 @@ package utnfc.isi.back.clientesservice.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.time.Instant;
 
 @Configuration
 @EnableWebSecurity
@@ -24,19 +27,29 @@ public class ClienteSecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoints internos consumidos por microservicios (requieren JWT válido)
+
                         .requestMatchers("/direcciones/**").authenticated()
                         .requestMatchers("/geolocalizacion/**").authenticated()
 
-                        // Endpoints para usuarios humanos, requieren rol OPERADOR
                         .requestMatchers("/clientes/**").hasRole("OPERADOR")
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-
-                        // Cualquier otro request autenticado
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(this.jwtAuthConverter))
+                ) .exceptionHandling(ex -> ex
+                        .accessDeniedHandler((req, res, excep) -> {
+                            res.setStatus(HttpStatus.FORBIDDEN.value());
+                            res.setContentType("application/json");
+                            res.getWriter().write("""
+                        {
+                          "timestamp": "%s",
+                          "status": 403,
+                          "error": "Forbidden",
+                          "message": "No tiene permisos para realizar esta acción"
+                        }
+                        """.formatted(Instant.now(), req.getRequestURI()));
+                        })
                 );
 
         return http.build();

@@ -109,6 +109,12 @@
             <artifactId>swagger-ui</artifactId>
             <version>5.17.14</version>
         </dependency>
+
+             <dependency>
+            <groupId>utnfc.isi.back</groupId>
+            <artifactId>common-exception</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

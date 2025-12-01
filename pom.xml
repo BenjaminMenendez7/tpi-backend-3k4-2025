@@ -21,6 +21,7 @@
         <module>microservicios/contenedores-service</module>
         <module>microservicios/security-starter</module>
         <module>microservicios/gateway-service</module>
+        <module>microservicios/common-exceptions</module>
     </modules>
 
 

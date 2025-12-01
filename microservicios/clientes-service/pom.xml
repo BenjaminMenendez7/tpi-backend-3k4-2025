@@ -114,6 +114,18 @@
 			<artifactId>security-starter</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>utnfc.isi.back</groupId>
+			<artifactId>common-exception</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+
+				<dependency>
+					<groupId>utnfc.isi.back</groupId>
+					<artifactId>common-exception</artifactId>
+					<version>0.0.1-SNAPSHOT</version>
+				</dependency>
 
 	</dependencies>
 
