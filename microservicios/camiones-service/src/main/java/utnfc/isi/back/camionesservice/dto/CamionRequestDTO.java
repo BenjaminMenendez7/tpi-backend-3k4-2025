@@ -10,8 +10,6 @@ public class CamionRequestDTO {
     private BigDecimal capacidadPeso;
     private BigDecimal capacidadVolumen;
     private BigDecimal costoBaseKm;
-    private BigDecimal consumoCombustiblePromedio;
-    private Boolean disponible;
     private Long idTransportista;
     private Long idTipoCamion; // ➜ faltaba este campo
 }

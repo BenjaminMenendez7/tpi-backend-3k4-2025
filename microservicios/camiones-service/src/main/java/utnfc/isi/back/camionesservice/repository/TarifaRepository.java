@@ -8,4 +8,5 @@ import java.util.List;
 public interface TarifaRepository extends JpaRepository<Tarifa, Long> {
 
     List<Tarifa> findByTipoCamionId(Long idTipoCamion);
+    boolean existsByTipoCamionIdAndRangoPesoAndRangoVolumen(Long idTipoCamion, String rangoPeso, String rangoVolumen);
 }
