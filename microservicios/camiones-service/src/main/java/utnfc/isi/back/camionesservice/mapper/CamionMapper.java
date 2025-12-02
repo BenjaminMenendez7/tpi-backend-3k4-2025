@@ -1,54 +1,31 @@
 package utnfc.isi.back.camionesservice.mapper;
 
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import utnfc.isi.back.camionesservice.dto.*;
 import utnfc.isi.back.camionesservice.entity.Camion;
-import utnfc.isi.back.camionesservice.entity.Transportista;
 
-public class CamionMapper {
+@Mapper(componentModel = "spring")
+public interface CamionMapper {
 
-    public static CamionDTO toDTO(Camion c) {
-        CamionDTO dto = new CamionDTO();
+    @Mapping(target = "idTransportista", source = "transportista.id")
+    @Mapping(target = "idTipoCamion", source = "tipoCamion.id")
+    CamionDTO toDTO(Camion camion);
 
-        dto.setId(c.getId());
-        dto.setPatente(c.getPatente());
-        dto.setCapacidadPeso(c.getCapacidadPeso());
-        dto.setCapacidadVolumen(c.getCapacidadVolumen());
-        dto.setDisponible(c.isDisponible());
-        dto.setCostoBaseKm(c.getCostoBaseKm());
-        dto.setConsumoCombustiblePromedio(c.getConsumoCombustiblePromedio());
+    @Mapping(target = "transportista.id", source = "idTransportista")
+    @Mapping(target = "tipoCamion.id", source = "idTipoCamion")
+    Camion toEntity(CamionRequestDTO dto);
 
-        if (c.getTransportista() != null) {
-            dto.setIdTransportista(c.getTransportista().getId());
-        }
+    @Mapping(target = "transportista.id", source = "idTransportista")
+    @Mapping(target = "tipoCamion.id", source = "idTipoCamion")
+    void updateEntityFromDto(CamionRequestDTO dto, @MappingTarget Camion camion);
 
-        if (c.getTipoCamion() != null) {
-            dto.setIdTipoCamion(c.getTipoCamion().getId());
-        }
-
-        return dto;
-    }
-
-    public static CamionConTransportistaDTO toConTransportistaDTO(Camion c) {
-        CamionConTransportistaDTO dto = new CamionConTransportistaDTO();
-
-        dto.setId(c.getId());
-        dto.setPatente(c.getPatente());
-        dto.setCapacidadPeso(c.getCapacidadPeso());
-        dto.setCapacidadVolumen(c.getCapacidadVolumen());
-        dto.setDisponible(c.isDisponible());
-        dto.setCostoBaseKm(c.getCostoBaseKm());
-        dto.setConsumoCombustiblePromedio(c.getConsumoCombustiblePromedio());
-
-        Transportista t = c.getTransportista();
-        if (t != null) {
-            dto.setTransportistaId(t.getId());
-            dto.setDocumento(t.getDocumento());
-            dto.setNombre(t.getNombre());
-            dto.setApellido(t.getApellido());
-            dto.setEmail(t.getEmail());
-            dto.setTelefono(t.getTelefono());
-        }
-
-        return dto;
-    }
+    @Mapping(target = "transportistaId", source = "transportista.id")
+    @Mapping(target = "documento", source = "transportista.documento")
+    @Mapping(target = "nombre", source = "transportista.nombre")
+    @Mapping(target = "apellido", source = "transportista.apellido")
+    @Mapping(target = "email", source = "transportista.email")
+    @Mapping(target = "telefono", source = "transportista.telefono")
+    CamionConTransportistaDTO toConTransportistaDTO(Camion camion);
 }

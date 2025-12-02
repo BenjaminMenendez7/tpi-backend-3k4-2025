@@ -1,5 +1,6 @@
 package utnfc.isi.back.clientesservice.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,6 +23,7 @@ CREATE TABLE calle (
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 @Getter @Setter
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Calle {
 
     //atributos

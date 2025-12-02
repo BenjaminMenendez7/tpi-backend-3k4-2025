@@ -1,12 +1,15 @@
 package utnfc.isi.back.camionesservice.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import utnfc.isi.back.camionesservice.dto.CamionConTransportistaDTO;
 import utnfc.isi.back.camionesservice.dto.CamionDTO;
 import utnfc.isi.back.camionesservice.dto.CamionRequestDTO;
 import utnfc.isi.back.camionesservice.entity.Camion;
+import utnfc.isi.back.camionesservice.mapper.CamionMapper;
 import utnfc.isi.back.camionesservice.repository.CamionRepository;
 import utnfc.isi.back.camionesservice.service.CamionService;
 
@@ -19,7 +22,7 @@ public class CamionController {
 
     private final CamionService camionService;
     private final CamionRepository camionRepository;
-
+    private final CamionMapper camionMapper;
     // ===========================
     //           CONSULTAS
     // ===========================
@@ -63,7 +66,11 @@ public class CamionController {
     @PreAuthorize("hasRole('OPERADOR')")
     @GetMapping("/{idCamion}/detalle")
     public CamionConTransportistaDTO obtenerDetalleConTransportista(@PathVariable Long idCamion) {
-        return camionService.obtenerDetalleConTransportista(idCamion);
+        Camion camion = camionRepository.findById(idCamion)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Camión no encontrado con id: " + idCamion));
+
+        return camionMapper.toConTransportistaDTO(camion);
     }
 
 

@@ -1,5 +1,6 @@
 package utnfc.isi.back.clientesservice.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,6 +23,7 @@ CREATE TABLE ciudad (
 @EqualsAndHashCode(of = {"id"})
 @NoArgsConstructor
 @Setter @Getter
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Ciudad {
 
     //atributos

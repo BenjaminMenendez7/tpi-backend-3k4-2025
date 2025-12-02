@@ -1,6 +1,7 @@
 package utnfc.isi.back.camionesservice.dto;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 import java.math.BigDecimal;
 
 @Getter @Setter
@@ -12,5 +13,5 @@ public class CamionRequestDTO {
     private BigDecimal consumoCombustiblePromedio;
     private Boolean disponible;
     private Long idTransportista;
+    private Long idTipoCamion; // ➜ faltaba este campo
 }
-
