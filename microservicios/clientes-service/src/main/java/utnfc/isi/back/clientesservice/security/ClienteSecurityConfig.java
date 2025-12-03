@@ -32,7 +32,9 @@ public class ClienteSecurityConfig {
                         .requestMatchers("/geolocalizacion/**").authenticated()
 
                         .requestMatchers("/clientes/**").hasRole("OPERADOR")
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html", "/webjars/**").permitAll()
+
+
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth

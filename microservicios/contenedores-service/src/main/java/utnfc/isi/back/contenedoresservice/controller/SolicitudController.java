@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import utnfc.isi.back.contenedoresservice.dto.HistorialEstadoDTO;
 import utnfc.isi.back.contenedoresservice.dto.SolicitudDTO;
 import utnfc.isi.back.contenedoresservice.dto.SolicitudDetalleDTO;
@@ -42,9 +43,12 @@ public class SolicitudController {
     public Mono<ResponseEntity<SolicitudDetalleDTO>> save(
             @Valid @RequestBody SolicitudDTO solicitudDto,
             ServerHttpRequest request) {
-        SolicitudDetalleDTO result = solicitudService.save(solicitudDto);
-        URI location = request.getURI().resolve(result.getId().toString());
-        return Mono.just(ResponseEntity.created(location).body(result));
+        return Mono.fromCallable(() -> solicitudService.save(solicitudDto))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(result -> {
+                    URI location = request.getURI().resolve(result.getId().toString());
+                    return ResponseEntity.created(location).body(result);
+                });
     }
 
     // ============ OPERADOR ============
