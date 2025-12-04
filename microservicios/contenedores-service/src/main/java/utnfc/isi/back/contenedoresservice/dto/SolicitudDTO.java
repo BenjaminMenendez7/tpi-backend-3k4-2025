@@ -9,9 +9,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SolicitudDTO {
-    @NotNull(message = "El id de la solicitud es obligatorio")
-    private Long id;
-
     @NotNull(message = "El idCliente es obligatorio")
     private Long idCliente;
 
