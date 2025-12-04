@@ -40,6 +40,7 @@ import java.util.*;
 public class SolicitudService {
 
     private final SolicitudMapper solicitudMapper;
+    private final ContenedorRepository contenedorRepository;
     private Long estadiaRealMinutos;
     private final CamionClient camionClient;
     private final EstadoSolicitudRepository estadoSolicitudRepository;
@@ -116,7 +117,10 @@ public class SolicitudService {
         detalle.setIdCliente(solicitud.getIdCliente());
         detalle.setFechaSolicitud(solicitud.getFechaCreacion());
         detalle.setEstadoSolicitud(solicitud.getEstadoSolicitud().getNombre());
-        detalle.setContenedor(solicitud.getContenedor() != null ? contenedorMapper.toDTO(solicitud.getContenedor()) : null);
+        Contenedor contenedor = contenedorRepository.findById(solicitud.getContenedor().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Contenedor no encontrado"));
+        ContenedorDTO contenedorDTO = contenedorMapper.toDTO(contenedor);
+        detalle.setContenedor(contenedorDTO);
 
         // ================================
         // RUTAS

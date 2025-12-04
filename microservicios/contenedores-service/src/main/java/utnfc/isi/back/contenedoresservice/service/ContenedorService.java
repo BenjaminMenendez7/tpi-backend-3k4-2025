@@ -3,6 +3,7 @@ package utnfc.isi.back.contenedoresservice.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import utnfc.isi.back.contenedoresservice.entity.Contenedor;
+import utnfc.isi.back.contenedoresservice.exception.ResourceNotFoundException;
 import utnfc.isi.back.contenedoresservice.repository.ContenedorRepository;
 
 import java.util.List;
@@ -18,7 +19,7 @@ public class ContenedorService {
     }
 
     public Contenedor findById(Long id) {
-        return contenedorRepository.findById(id).orElse(null);
+        return contenedorRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Contenedor no encontrado"));
     }
 
     public Contenedor save(Contenedor contenedor) {

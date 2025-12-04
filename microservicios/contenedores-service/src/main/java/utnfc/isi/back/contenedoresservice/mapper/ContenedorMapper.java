@@ -3,6 +3,8 @@ package utnfc.isi.back.contenedoresservice.mapper;
 import org.springframework.stereotype.Component;
 import utnfc.isi.back.contenedoresservice.entity.Contenedor;
 import utnfc.isi.back.contenedoresservice.dto.ContenedorDTO;
+import utnfc.isi.back.contenedoresservice.exception.ReglaNegocioException;
+import utnfc.isi.back.contenedoresservice.exception.ResourceNotFoundException;
 
 @Component
 public class ContenedorMapper {
@@ -18,6 +20,8 @@ public class ContenedorMapper {
 
         if (entity.getEstadoContenedor() != null) {
             dto.setEstado(entity.getEstadoContenedor().getNombre());
+        } else {
+            throw new ReglaNegocioException("El contenedor no tiene estado definido");
         }
 
         return dto;
