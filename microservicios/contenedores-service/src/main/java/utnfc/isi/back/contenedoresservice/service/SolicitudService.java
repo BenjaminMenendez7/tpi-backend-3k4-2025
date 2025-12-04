@@ -86,7 +86,7 @@ public class SolicitudService {
     public SolicitudDetalleDTO save(SolicitudDTO solicitudDto) {
         Solicitud solicitud = solicitudMapper.toEntity(solicitudDto);
 
-        EstadoSolicitud estadoBorrador = estadoSolicitudRepository.findByNombre(EstadoSolicitudEnum.BORRADOR.name())
+        EstadoSolicitud estadoBorrador = estadoSolicitudRepository.findByNombre(EstadoSolicitudEnum.BORRADOR.name().toLowerCase())
                         .orElseThrow(() -> new ResourceNotFoundException("Estado BORRADOR no encontrado", solicitud.getId()));
 
         solicitud.setEstadoSolicitud(estadoBorrador);
