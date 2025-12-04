@@ -39,7 +39,7 @@ public class TramoService {
 
         validarInicio(tramo);
 
-        EstadoTramo estadoIniciado = estadoTramoRepository.findByNombre(EstadoTramoEnum.INICIADO.name())
+        EstadoTramo estadoIniciado = estadoTramoRepository.findByNombre(String.valueOf(EstadoTramoEnum.iniciado))
                 .orElseThrow(() -> new  ResourceNotFoundException("Estado 'Iniciado' no encontrado"));
 
         tramo.setEstadoTramo(estadoIniciado);
@@ -61,7 +61,7 @@ public class TramoService {
 
         validarFin(tramo);
 
-        EstadoTramo estadoFinalizado = estadoTramoRepository.findByNombre(EstadoTramoEnum.FINALIZADO.name())
+        EstadoTramo estadoFinalizado = estadoTramoRepository.findByNombre(String.valueOf(EstadoTramoEnum.finalizado))
                 .orElseThrow(() -> new  ResourceNotFoundException("Estado 'Finalizado' no encontrado"));
 
         // Setear la fecha de fin

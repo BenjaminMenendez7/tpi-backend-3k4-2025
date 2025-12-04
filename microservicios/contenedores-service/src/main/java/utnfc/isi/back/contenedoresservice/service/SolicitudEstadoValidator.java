@@ -11,9 +11,9 @@ public class SolicitudEstadoValidator {
 
     private static final Map<EstadoSolicitudEnum, Set<EstadoSolicitudEnum>>
             TRANSICIONES_VALIDAS = Map.of(
-                    EstadoSolicitudEnum.BORRADOR, Set.of(EstadoSolicitudEnum.PROGRAMADA),
-                    EstadoSolicitudEnum.PROGRAMADA, Set.of(EstadoSolicitudEnum.EN_TRANSITO),
-                    EstadoSolicitudEnum.EN_TRANSITO, Set.of(EstadoSolicitudEnum.ENTREGADA)
+                    EstadoSolicitudEnum.borrador, Set.of(EstadoSolicitudEnum.programada),
+                    EstadoSolicitudEnum.programada, Set.of(EstadoSolicitudEnum.en_transito),
+                    EstadoSolicitudEnum.en_transito, Set.of(EstadoSolicitudEnum.entregada)
     );
 
     public boolean puedeCambiar(EstadoSolicitudEnum actual,  EstadoSolicitudEnum nuevo) {

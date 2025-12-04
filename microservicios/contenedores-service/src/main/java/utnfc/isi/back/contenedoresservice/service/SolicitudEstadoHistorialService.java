@@ -2,7 +2,10 @@ package utnfc.isi.back.contenedoresservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import utnfc.isi.back.contenedoresservice.entity.EstadoSolicitud;
 import utnfc.isi.back.contenedoresservice.entity.SolicitudEstadoHistorial;
+import utnfc.isi.back.contenedoresservice.repository.EstadoSolicitudRepository;
 import utnfc.isi.back.contenedoresservice.repository.SolicitudEstadoHistorialRepository;
 
 import java.time.LocalDateTime;
@@ -12,17 +15,19 @@ import java.time.LocalDateTime;
 public class SolicitudEstadoHistorialService {
 
     private final SolicitudEstadoHistorialRepository historialRepository;
+    private final EstadoSolicitudRepository estadoSolicitudRepository;
 
-    /**
-     * Guarda un nuevo registro en el historial de estado para una solicitud.
-     * @param idSolicitud ID de la solicitud
-     * @param idEstadoSolicitud ID del estado (FK a estado_solicitud)
-     */
+    @Transactional
     public void registrar(Long idSolicitud, Long idEstadoSolicitud) {
+        EstadoSolicitud estado = estadoSolicitudRepository.findById(idEstadoSolicitud)
+                .orElseThrow(() -> new IllegalArgumentException("Estado no existe: " + idEstadoSolicitud));
+
         SolicitudEstadoHistorial historial = new SolicitudEstadoHistorial();
         historial.setIdSolicitud(idSolicitud);
-        historial.setIdEstadoSolicitud(idEstadoSolicitud);
+        historial.setEstadoSolicitud(estado);          // ✅ setear relación
         historial.setFechaRegistro(LocalDateTime.now());
+
         historialRepository.save(historial);
     }
+
 }

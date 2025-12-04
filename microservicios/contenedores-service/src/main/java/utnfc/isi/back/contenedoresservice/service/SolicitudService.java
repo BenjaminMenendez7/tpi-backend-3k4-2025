@@ -87,16 +87,18 @@ public class SolicitudService {
     public SolicitudDetalleDTO save(SolicitudDTO solicitudDto) {
         Solicitud solicitud = solicitudMapper.toEntity(solicitudDto);
 
-        EstadoSolicitud estadoBorrador = estadoSolicitudRepository.findByNombre(EstadoSolicitudEnum.BORRADOR.name().toLowerCase())
+        EstadoSolicitud estadoBorrador = estadoSolicitudRepository.findByNombre(String.valueOf(EstadoSolicitudEnum.borrador))
                         .orElseThrow(() -> new ResourceNotFoundException("Estado BORRADOR no encontrado"));
 
+        solicitud.setIdCliente(solicitudDto.getIdCliente());
         solicitud.setEstadoSolicitud(estadoBorrador);
         solicitud.setFechaCreacion(LocalDateTime.now());
+        solicitud.setContenedor(contenedorRepository.findById(solicitudDto.getIdContenedor())
+                .orElseThrow(() -> new ResourceNotFoundException("Contenedor no encontrado")));
 
-        SolicitudDetalleDTO dto = buildDetalle(solicitud.getId());
-        solicitud.setContenedor(contenedorMapper.toEntity(dto.getContenedor()));
+        Solicitud solicitudGuardada = solicitudRepository.save(solicitud);
 
-        solicitudRepository.save(solicitud);
+        SolicitudDetalleDTO dto = buildDetalle(solicitudGuardada.getId());
 
         return dto;
     }
@@ -121,7 +123,7 @@ public class SolicitudService {
         detalle.setFechaSolicitud(solicitud.getFechaCreacion());
         detalle.setEstadoSolicitud(solicitud.getEstadoSolicitud().getNombre());
         Contenedor contenedor = contenedorRepository.findById(solicitud.getContenedor().getId())
-                .filter(c -> Objects.equals(c.getEstado(), "disponible"))
+                //.filter(c -> (c.getEstadoContenedor().getNombre().equalsIgnoreCase("disponible")))
                 .orElseThrow(() -> new ResourceNotFoundException("Contenedor no encontrado o no disponible"));
         ContenedorDTO contenedorDTO = contenedorMapper.toDTO(contenedor);
         detalle.setContenedor(contenedorDTO);
@@ -176,12 +178,14 @@ public class SolicitudService {
         // ================================
         // HISTORIAL DE ESTADOS
         // ================================
-        detalle.setHistorialEstado(
-                (HistorialEstadoDTO) historialRepository.findByIdSolicitudOrderByFechaRegistroAsc(idSolicitud)
-                        .stream()
-                        .map(historialMapper::toDTO)
-                        .toList()
-        );
+        List<HistorialEstadoDTO> historial = historialRepository
+                .findByIdSolicitudOrderByFechaRegistroAsc(idSolicitud)
+                .stream()
+                .map(historialMapper::toDTO)
+                .toList();
+
+        detalle.setHistorialEstados(historial);
+//        detalle.setHistorialEstados(null);
 
         return detalle;
     }
@@ -284,6 +288,7 @@ public class SolicitudService {
 
         return detalle;
     }
+
 
     private TarifaDTO obtenerTarifaPromedio(Solicitud solicitud) {
         BigDecimal peso = solicitud.getContenedor().getPeso();
@@ -503,7 +508,7 @@ public class SolicitudService {
         solicitudEstadoHistorialService.registrar(idSolicitud, nuevoEstadoId);
 
         // 5. Si la solicitud llega a "entregada", liberar camión
-        if (nuevoEnum == EstadoSolicitudEnum.ENTREGADA && solicitud.getIdCamion() != null) {
+        if (nuevoEnum == EstadoSolicitudEnum.entregada && solicitud.getIdCamion() != null) {
             camionClient.marcarDisponible(solicitud.getIdCamion());
         }
 

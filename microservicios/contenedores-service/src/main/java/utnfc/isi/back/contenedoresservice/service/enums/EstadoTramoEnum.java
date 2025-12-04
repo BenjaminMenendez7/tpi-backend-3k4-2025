@@ -1,7 +1,7 @@
 package utnfc.isi.back.contenedoresservice.service.enums;
 
 public enum EstadoTramoEnum {
-    BORRADOR(1L), INICIADO(2L), FINALIZADO(3L);
+    estimado(1L), asignado(2L), iniciado(3L), finalizado(4L);
 
     private Long id;
 

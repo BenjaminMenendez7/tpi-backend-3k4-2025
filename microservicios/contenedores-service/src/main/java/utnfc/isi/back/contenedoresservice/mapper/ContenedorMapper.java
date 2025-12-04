@@ -40,8 +40,9 @@ public class ContenedorMapper {
         entity.setPeso(dto.getPeso());
         entity.setVolumen(dto.getVolumen());
         entity.setIdCliente(dto.getIdCliente());
-        entity.setEstadoContenedor(estadoContenedorRepository.findByNombre(dto.getEstado())
-                .orElseThrow(() -> new ResourceNotFoundException("El contenedor no existe")));
+        entity.setEstadoContenedor(null);
+        //entity.setEstadoContenedor(estadoContenedorRepository.findByNombre(dto.getEstado())
+        //        .orElseThrow(() -> new ResourceNotFoundException("El contenedor no existe")));
         // El estado se completa en el servicio, no desde el DTO
 
         return entity;

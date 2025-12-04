@@ -23,7 +23,7 @@ public class SolicitudDetalleDTO {
     private BigDecimal costoEstimado;
     private BigDecimal costoFinal;
     private BigDecimal tiempoReal;
-    private HistorialEstadoDTO historialEstado;
+    private List<HistorialEstadoDTO> historialEstados;
     private DepositoDTO deposito;
     private BigDecimal costoTotal;
     private Long tiempoEstimadoMinutos;

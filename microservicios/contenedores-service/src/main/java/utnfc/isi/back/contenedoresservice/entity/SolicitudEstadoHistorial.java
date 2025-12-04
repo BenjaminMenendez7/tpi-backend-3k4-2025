@@ -16,8 +16,9 @@ public class SolicitudEstadoHistorial {
     @Column(name = "id_solicitud", nullable = false)
     private Long idSolicitud;
 
-    @Column(name = "id_estado_solicitud", nullable = false)
-    private Long idEstadoSolicitud;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_estado_solicitud", nullable = false)
+    private EstadoSolicitud estadoSolicitud;
 
     @Column(name = "fecha_registro", nullable = false)
     private LocalDateTime fechaRegistro;

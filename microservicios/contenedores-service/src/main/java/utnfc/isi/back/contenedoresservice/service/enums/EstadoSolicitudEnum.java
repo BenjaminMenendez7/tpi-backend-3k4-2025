@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 @Getter
 public enum EstadoSolicitudEnum {
-    BORRADOR(1L), PROGRAMADA(2L), EN_TRANSITO(3L), ENTREGADA(4L);
+    borrador(1L), programada(2L), en_transito(3L), entregada(4L);
 
     private final Long id;
 

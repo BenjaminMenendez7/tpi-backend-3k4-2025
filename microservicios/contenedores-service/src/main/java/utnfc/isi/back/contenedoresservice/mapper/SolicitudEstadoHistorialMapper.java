@@ -14,7 +14,7 @@ public class SolicitudEstadoHistorialMapper {
 
     public HistorialEstadoDTO toDTO(SolicitudEstadoHistorial entity) {
 
-        var estado = estadoSolicitudRepository.findById(entity.getIdEstadoSolicitud())
+        var estado = estadoSolicitudRepository.findById(entity.getEstadoSolicitud().getId())
                 .map(e -> e.getNombre())
                 .orElse("Estado desconocido");
 
