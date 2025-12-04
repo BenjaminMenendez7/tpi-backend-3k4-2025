@@ -246,10 +246,10 @@ VALUES
 --------------------------
 INSERT INTO estado_solicitud (nombre)
 VALUES
-    ('borrador'),
-    ('programada'),
-    ('en transito'),
-    ('entregada');
+    ('BORRADOR'),
+    ('PROGAMADA'),
+    ('EN_TRANSITO'),
+    ('ENTREGADA');
 
 
 -----------------------

@@ -13,6 +13,8 @@ public class TramoDTO {
     private CamionDTO camion;
     private Long origen;
     private Long destino;
+    private String origenNombre;
+    private String destinoNombre;
     private LocalDateTime fechaHoraInicio;
     private LocalDateTime fechaHoraFin;
     private BigDecimal costoAproximado;

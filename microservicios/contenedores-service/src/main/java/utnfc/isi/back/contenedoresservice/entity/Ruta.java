@@ -2,6 +2,7 @@ package utnfc.isi.back.contenedoresservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import utnfc.isi.back.contenedoresservice.dto.RutaDTO;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -34,7 +35,7 @@ CREATE TABLE ruta (
 @EqualsAndHashCode(of = {"id"})
 @NoArgsConstructor
 @Getter @Setter
-public class Ruta {
+public class Ruta extends RutaDTO {
 
     // atributos
     @Id

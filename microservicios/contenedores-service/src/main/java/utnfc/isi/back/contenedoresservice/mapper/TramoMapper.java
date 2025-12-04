@@ -2,9 +2,13 @@ package utnfc.isi.back.contenedoresservice.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import utnfc.isi.back.contenedoresservice.client.CamionClient;
 import utnfc.isi.back.contenedoresservice.client.DireccionClient;
+import utnfc.isi.back.contenedoresservice.dto.CamionDTO;
 import utnfc.isi.back.contenedoresservice.entity.Tramo;
 import utnfc.isi.back.contenedoresservice.dto.TramoDTO;
+import utnfc.isi.back.contenedoresservice.exception.GlobalExceptionHandler;
+import utnfc.isi.back.contenedoresservice.exception.ResourceNotFoundException;
 
 
 @Component
@@ -12,16 +16,21 @@ import utnfc.isi.back.contenedoresservice.dto.TramoDTO;
 public class TramoMapper {
 
     private final DireccionClient direccionClient;
+    private final CamionClient camionClient;
 
     public TramoDTO toDTO(Tramo entity) {
         if (entity == null) return null;
 
         TramoDTO dto = new TramoDTO();
         dto.setId(entity.getId());
-        dto.setIdRuta(entity.getRuta() != null ? entity.getRuta().getId() : null);
-        dto.setIdCamion(entity.getIdCamion());
-        dto.setIdTipoTramo(entity.getTipoTramo() != null ? entity.getTipoTramo().getId() : null);
-        dto.setIdEstadoTramo(entity.getEstadoTramo() != null ? entity.getEstadoTramo().getId() : null);
+        dto.setRuta(entity.getRuta() != null ? entity.getRuta() : null);
+        CamionDTO camion = camionClient.obtenerCamion(entity.getIdCamion()).block();
+        if (camion == null) {
+            throw new ResourceNotFoundException("Camión no encontrado");
+        }
+        dto.setCamion(camion);
+        dto.setTipoTramo(entity.getTipoTramo() != null ? entity.getTipoTramo() : null);
+        dto.setEstadoTramo(entity.getEstadoTramo() != null ? entity.getEstadoTramo().getNombre() : null);
 
         dto.setOrigen(entity.getOrigen());
         dto.setDestino(entity.getDestino());
@@ -64,7 +73,7 @@ public class TramoMapper {
 
         Tramo entity = new Tramo();
         entity.setId(dto.getId());
-        entity.setIdCamion(dto.getIdCamion());
+        entity.setIdCamion(dto.getCamion().getId());
         entity.setOrigen(dto.getOrigen());
         entity.setDestino(dto.getDestino());
         entity.setFechaHoraInicio(dto.getFechaHoraInicio());

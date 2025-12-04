@@ -2,6 +2,8 @@ package utnfc.isi.back.contenedoresservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import utnfc.isi.back.contenedoresservice.dto.ContenedorDTO;
+
 import java.math.BigDecimal;
 
 /*
@@ -30,7 +32,7 @@ CREATE TABLE contenedor (
 @EqualsAndHashCode(of = {"id"})
 @NoArgsConstructor
 @Getter @Setter
-public class Contenedor {
+public class Contenedor extends ContenedorDTO {
 
     // atributos
     @Id

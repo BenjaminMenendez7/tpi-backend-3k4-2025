@@ -1,34 +1,33 @@
 package utnfc.isi.back.contenedoresservice.mapper;
 
 import org.springframework.stereotype.Component;
+import utnfc.isi.back.contenedoresservice.dto.ContenedorDTO;
+import utnfc.isi.back.contenedoresservice.dto.SolicitudDetalleDTO;
 import utnfc.isi.back.contenedoresservice.entity.Solicitud;
 import utnfc.isi.back.contenedoresservice.dto.SolicitudDTO;
 
 @Component
 public class SolicitudMapper {
-
-    public SolicitudDTO toDTO(Solicitud entity) {
+    public SolicitudDetalleDTO toDTO(Solicitud entity) {
         if (entity == null) return null;
 
-        SolicitudDTO dto = new SolicitudDTO();
+        SolicitudDetalleDTO dto = new SolicitudDetalleDTO();
         dto.setId(entity.getId());
 
         // entidad.fechaCreacion → dto.fechaSolicitud
         dto.setFechaSolicitud(entity.getFechaCreacion());
 
         // FK contenedor
-        dto.setIdContenedor(
-                entity.getContenedor() != null ? entity.getContenedor().getId() : null
-        );
+        dto.setContenedor(entity.getContenedor() != null ? entity.getContenedor() : null);
 
         // La entidad NO tiene depósito → null
-        dto.setIdDeposito(null);
+        dto.setDeposito(null);
 
         // La entidad todavía NO tiene ruta → null
-        dto.setIdRuta(null);
+        dto.setRuta(null);
 
         // EstadoSolicitud → String estado (el DTO pide un string)
-        dto.setEstado(
+        dto.setEstadoSolicitud(
                 entity.getEstadoSolicitud() != null ? entity.getEstadoSolicitud().getNombre() : null
         );
 
@@ -49,10 +48,9 @@ public class SolicitudMapper {
         if (dto == null) return null;
 
         Solicitud entity = new Solicitud();
-        entity.setId(dto.getId());
 
         // dto.fechaSolicitud → entidad.fechaCreacion
-        entity.setFechaCreacion(dto.getFechaSolicitud());
+        entity.setFechaCreacion(null);
 
         // La entidad necesita idCliente, pero el DTO no lo trae
         entity.setIdCliente(null); // lo vas a completar al crear la solicitud
@@ -65,7 +63,7 @@ public class SolicitudMapper {
 
         // costos y tiempos: el DTO trae uno solo (costoTotal)
         entity.setCostoEstimado(null);
-        entity.setCostoFinal(dto.getCostoTotal());
+        entity.setCostoFinal(null);
         entity.setTiempoReal(null);
 
         return entity;

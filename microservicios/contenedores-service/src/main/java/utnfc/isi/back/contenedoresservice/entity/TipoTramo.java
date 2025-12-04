@@ -2,6 +2,7 @@ package utnfc.isi.back.contenedoresservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import utnfc.isi.back.contenedoresservice.dto.TipoTramoDTO;
 
 /*
 -- Tabla tipo_tramo
@@ -16,7 +17,7 @@ CREATE TABLE tipo_tramo (
 @EqualsAndHashCode(of = {"id"})
 @NoArgsConstructor
 @Getter @Setter
-public class TipoTramo {
+public class TipoTramo extends TipoTramoDTO {
 
     // atributos
     @Id
