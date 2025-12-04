@@ -1,12 +1,14 @@
 package utnfc.isi.back.contenedoresservice.dto;
 
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CamionDTO {
-
     private Long id;
     private Long idTipoCamion;
     private String patente;

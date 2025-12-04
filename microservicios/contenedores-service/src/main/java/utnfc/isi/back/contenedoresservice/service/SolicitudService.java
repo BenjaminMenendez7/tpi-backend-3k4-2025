@@ -20,6 +20,7 @@ import utnfc.isi.back.contenedoresservice.exception.TransicionInvalidaException;
 import utnfc.isi.back.contenedoresservice.mapper.*;
 import utnfc.isi.back.contenedoresservice.repository.*;
 import utnfc.isi.back.contenedoresservice.service.enums.EstadoSolicitudEnum;
+import utnfc.isi.back.contenedoresservice.service.enums.EstadoTramoEnum;
 import utnfc.isi.back.contenedoresservice.service.external.CamionExternalService;
 import utnfc.isi.back.contenedoresservice.service.external.GeolocalizacionExternalService;
 import utnfc.isi.back.contenedoresservice.service.external.TarifaExternalService;
@@ -29,6 +30,7 @@ import utnfc.isi.back.contenedoresservice.dto.external.TarifaDTO;  // ✔ el cor
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 
 
@@ -82,24 +84,17 @@ public class SolicitudService {
 
     @Transactional
     public SolicitudDetalleDTO save(SolicitudDTO solicitudDto) {
-        var solicitud = solicitudMapper.toEntity(solicitudDto);
+        Solicitud solicitud = solicitudMapper.toEntity(solicitudDto);
 
         EstadoSolicitud estadoBorrador = estadoSolicitudRepository.findByNombre(EstadoSolicitudEnum.BORRADOR.name())
                         .orElseThrow(() -> new ResourceNotFoundException("Estado BORRADOR no encontrado", solicitud.getId()));
 
         solicitud.setEstadoSolicitud(estadoBorrador);
+        solicitud.setFechaCreacion(LocalDateTime.now());
 
         solicitudRepository.save(solicitud);
 
-        SolicitudDetalleDTO dto = new SolicitudDetalleDTO();
-        dto.setId(solicitud.getId());
-        dto.setFechaSolicitud(solicitud.getFechaCreacion());
-        dto.setEstado(solicitud.getEstadoSolicitud().getNombre());
-        dto.setContenedor(solicitud.getContenedor() != null ? contenedorMapper.toDTO(solicitud.getContenedor()) : null);
-        dto.setCostoFinal(solicitud.getCostoFinal());
-        dto.setCostoTotal(solicitud.getCostoEstimado());
-        dto.setTiempoReal(solicitud.getTiempoReal());
-        return dto;
+        return buildDetalle(solicitud.getId());
     }
 
     @Transactional
@@ -118,8 +113,9 @@ public class SolicitudService {
 
         SolicitudDetalleDTO detalle = new SolicitudDetalleDTO();
         detalle.setId(solicitud.getId());
+        detalle.setIdCliente(solicitud.getIdCliente());
         detalle.setFechaSolicitud(solicitud.getFechaCreacion());
-        detalle.setEstado(solicitud.getEstadoSolicitud().getNombre());
+        detalle.setEstadoSolicitud(solicitud.getEstadoSolicitud().getNombre());
         detalle.setContenedor(solicitud.getContenedor() != null ? contenedorMapper.toDTO(solicitud.getContenedor()) : null);
 
         // ================================
@@ -145,9 +141,9 @@ public class SolicitudService {
                                 TramoDTO tramoDTO = tramoMapper.toDTO(tramo);
                                 // Aseguramos que el nombre del estado del tramo se obtenga correctamente
                                 if (tramo.getEstadoTramo() != null) {
-                                    tramoDTO.setEstadoNombre(tramo.getEstadoTramo().getNombre());
+                                    tramoDTO.setEstadoTramo(tramo.getEstadoTramo().getNombre());
                                 } else {
-                                    tramoDTO.setEstadoNombre("Desconocido");
+                                    tramoDTO.setEstadoTramo("Desconocido");
                                 }
                                 return tramoDTO;
                             })
@@ -172,8 +168,8 @@ public class SolicitudService {
         // ================================
         // HISTORIAL DE ESTADOS
         // ================================
-        detalle.setHistorialEstados(
-                historialRepository.findByIdSolicitudOrderByFechaRegistroAsc(idSolicitud)
+        detalle.setHistorialEstado(
+                (HistorialEstadoDTO) historialRepository.findByIdSolicitudOrderByFechaRegistroAsc(idSolicitud)
                         .stream()
                         .map(historialMapper::toDTO)
                         .toList()
@@ -189,7 +185,7 @@ public class SolicitudService {
                     SolicitudDetalleDTO dto = new SolicitudDetalleDTO();
                     dto.setId(s.getId());
                     dto.setFechaSolicitud(s.getFechaCreacion());
-                    dto.setEstado(s.getEstadoSolicitud().getNombre());
+                    dto.setEstadoSolicitud(s.getEstadoSolicitud().getNombre());
                     dto.setContenedor(s.getContenedor() != null ? contenedorMapper.toDTO(s.getContenedor()) : null);
                     dto.setCostoFinal(s.getCostoFinal());
                     dto.setCostoTotal(s.getCostoEstimado());
@@ -295,7 +291,7 @@ public class SolicitudService {
 
         List<Tramo> tramosActualizados = new ArrayList<>();
 
-        for (var tramo : detalle.getTramos()) {
+        for (TramoDTO tramo : detalle.getTramos()){
             BigDecimal distanciaKm = calcularDistanciaReal(tramo.getOrigen(), tramo.getDestino());
             BigDecimal velocidadPromedioKmH = BigDecimal.valueOf(60);
             long minutos = distanciaKm.divide(velocidadPromedioKmH, 2, RoundingMode.HALF_UP)
@@ -304,7 +300,7 @@ public class SolicitudService {
             tramo.setDistanciaKm(distanciaKm);
             tramo.setTiempoEstimadoMinutos(minutos);
 
-            var tramoEntity = tramoRepository.findById(tramo.getId())
+            Tramo tramoEntity = tramoRepository.findById(tramo.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Tramo no encontrado"));
             tramoEntity.setDistanciaKm(distanciaKm);
             tramoEntity.setTiempoEstimadoMinutos(minutos);
@@ -326,7 +322,7 @@ public class SolicitudService {
 
     private long calcularEstadiaReal(SolicitudDetalleDTO detalle) {
         return detalle.getTramos().stream()
-                .filter(t -> Arrays.asList(1, 2, 3).contains(t.getIdTipoTramo()))
+                .filter(t -> Arrays.asList(1, 2, 3).contains(t.getTipoTramo().getId()))
                 .filter(t -> t.getFechaHoraInicio() != null && t.getFechaHoraFin() != null)
                 .mapToLong(t -> Duration.between(t.getFechaHoraInicio(), t.getFechaHoraFin()).toMinutes())
                 .sum();

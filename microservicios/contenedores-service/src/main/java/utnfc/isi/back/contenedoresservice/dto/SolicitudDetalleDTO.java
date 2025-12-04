@@ -1,51 +1,34 @@
 package utnfc.isi.back.contenedoresservice.dto;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import utnfc.isi.back.contenedoresservice.entity.SolicitudEstadoHistorial;
 
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.List;
 
-@Data
-@Getter
-@Setter
+@Getter @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SolicitudDetalleDTO {
-    @NotNull(message = "El idDetalle es obligatorio")
     private Long id;
+    private Long idCliente;
     private LocalDateTime fechaSolicitud;
-
-    @NotNull
+    private String estadoSolicitud;
     private ContenedorDTO contenedor;
-
-    @NotNull
-    private DepositoDTO deposito;
-
-    @NotNull
     private RutaDTO ruta;
-
-    @NotNull
     private List<TramoDTO> tramos;
-
-    private String estado;
-
+    private CamionDTO camion;
+    private BigDecimal costoEstimado;
+    private BigDecimal costoFinal;
+    private BigDecimal tiempoReal;
+    private HistorialEstadoDTO historialEstado;
+    private DepositoDTO deposito;
     private BigDecimal costoTotal;
     private Long tiempoEstimadoMinutos;
-
     private BigDecimal costoEstadia;
     private BigDecimal costoCombustible;
     private BigDecimal costoKilometros;
-
-    private CamionDTO camion;
-    private List<HistorialEstadoDTO> historialEstados;
-
-    private BigDecimal costoFinal;
-    private BigDecimal tiempoReal;
-
     private Long estadiaRealMinutos;
-
-
-
 }

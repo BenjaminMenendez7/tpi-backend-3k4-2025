@@ -1,9 +1,14 @@
 package utnfc.isi.back.contenedoresservice.dto;
 
-import lombok.Data;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HistorialEstadoDTO {
     private String estado;
     private LocalDateTime fecha;

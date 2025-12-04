@@ -69,6 +69,7 @@ CREATE TABLE tramo (
 @Table(name = "tramo")
 @EqualsAndHashCode(of = {"id"})
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter @Setter
 public class Tramo {
 
