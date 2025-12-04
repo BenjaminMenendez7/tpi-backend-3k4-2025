@@ -93,9 +93,12 @@ public class SolicitudService {
         solicitud.setEstadoSolicitud(estadoBorrador);
         solicitud.setFechaCreacion(LocalDateTime.now());
 
+        SolicitudDetalleDTO dto = buildDetalle(solicitud.getId());
+        solicitud.setContenedor(contenedorMapper.toEntity(dto.getContenedor()));
+
         solicitudRepository.save(solicitud);
 
-        return buildDetalle(solicitud.getId());
+        return dto;
     }
 
     @Transactional
@@ -118,7 +121,8 @@ public class SolicitudService {
         detalle.setFechaSolicitud(solicitud.getFechaCreacion());
         detalle.setEstadoSolicitud(solicitud.getEstadoSolicitud().getNombre());
         Contenedor contenedor = contenedorRepository.findById(solicitud.getContenedor().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Contenedor no encontrado"));
+                .filter(c -> Objects.equals(c.getEstado(), "disponible"))
+                .orElseThrow(() -> new ResourceNotFoundException("Contenedor no encontrado o no disponible"));
         ContenedorDTO contenedorDTO = contenedorMapper.toDTO(contenedor);
         detalle.setContenedor(contenedorDTO);
 

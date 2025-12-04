@@ -1,13 +1,18 @@
 package utnfc.isi.back.contenedoresservice.mapper;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import utnfc.isi.back.contenedoresservice.entity.Contenedor;
 import utnfc.isi.back.contenedoresservice.dto.ContenedorDTO;
+import utnfc.isi.back.contenedoresservice.entity.EstadoContenedor;
 import utnfc.isi.back.contenedoresservice.exception.ReglaNegocioException;
 import utnfc.isi.back.contenedoresservice.exception.ResourceNotFoundException;
+import utnfc.isi.back.contenedoresservice.repository.EstadoContenedorRepository;
 
 @Component
+@AllArgsConstructor
 public class ContenedorMapper {
+    private final EstadoContenedorRepository estadoContenedorRepository;
 
     public ContenedorDTO toDTO(Contenedor entity) {
         if (entity == null) return null;
@@ -35,9 +40,9 @@ public class ContenedorMapper {
         entity.setPeso(dto.getPeso());
         entity.setVolumen(dto.getVolumen());
         entity.setIdCliente(dto.getIdCliente());
-
+        entity.setEstadoContenedor(estadoContenedorRepository.findByNombre(dto.getEstado())
+                .orElseThrow(() -> new ResourceNotFoundException("El contenedor no existe")));
         // El estado se completa en el servicio, no desde el DTO
-        entity.setEstadoContenedor(null);
 
         return entity;
     }
