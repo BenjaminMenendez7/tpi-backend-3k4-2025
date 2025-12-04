@@ -66,7 +66,7 @@ public class Solicitud {
     @Column(name = "id_camion")
     private Long idCamion;
 
-    @Column(name = "fecha_creacion")
+    @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
     @Column(name = "costo_estimado")

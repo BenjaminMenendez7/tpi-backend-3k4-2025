@@ -87,7 +87,7 @@ public class SolicitudService {
         Solicitud solicitud = solicitudMapper.toEntity(solicitudDto);
 
         EstadoSolicitud estadoBorrador = estadoSolicitudRepository.findByNombre(EstadoSolicitudEnum.BORRADOR.name().toLowerCase())
-                        .orElseThrow(() -> new ResourceNotFoundException("Estado BORRADOR no encontrado", solicitud.getId()));
+                        .orElseThrow(() -> new ResourceNotFoundException("Estado BORRADOR no encontrado"));
 
         solicitud.setEstadoSolicitud(estadoBorrador);
         solicitud.setFechaCreacion(LocalDateTime.now());
@@ -130,7 +130,7 @@ public class SolicitudService {
                     .findFirst()
                     .orElse(rutas.get(0));
 
-            var tramosOrdenados = tramoRepository.findByRuta_IdOrderByIdAsc(rutaSel.getId());
+            List<Tramo> tramosOrdenados = tramoRepository.findByRuta_IdOrderByIdAsc(rutaSel.getId());
             rutaSel.setTramos(tramosOrdenados);
 
             detalle.setRuta(rutaMapper.toDTO(rutaSel));
